@@ -5,8 +5,8 @@ low-level concerns of a SharePoint request in one place: server-relative site
 validation, request headers, request digests, ETags, response parsing, and
 limited retry handling.
 
-This is the first package in SPMIDDLE. It is a transport, not a list ORM or a
-domain repository layer.
+This package provides the transport and a small list client. It is not an ORM
+or a domain repository layer.
 
 ## Installation
 
@@ -26,6 +26,45 @@ import { createSharePointRestClient } from "@spmiddle/sharepoint-rest-browser";
 
 The package requires a browser environment with `fetch`. Tests and controlled
 hosts may provide a compatible `fetchImpl` instead.
+
+## List client
+
+The list client builds a limited SharePoint REST item API on top of a transport:
+
+```js
+import {
+  createSharePointListClient,
+  createSharePointRestClient
+} from "@spmiddle/sharepoint-rest-browser";
+
+const transport = createSharePointRestClient({ webUrl: "/sites/example" });
+const tasks = createSharePointListClient({
+  transport,
+  listPath: "lists/getbytitle('Tasks')"
+});
+
+const page = await tasks.getListItems({
+  select: ["Id", "Title", "Status"],
+  filter: "Status eq 'Open'",
+  orderBy: [{ field: "Title", direction: "asc" }],
+  top: 25
+});
+
+const created = await tasks.createListItem({ Title: "Review" });
+await tasks.updateListItem(created.data.Id, { Status: "Closed" }, {
+  etag: created.etag
+});
+```
+
+The client supports `listId` (a GUID) or a validated REST `listPath`, but not
+both. `getListItems` returns the transport response and keeps SharePoint's
+`odata.nextLink` in `data`; pass that link back as `nextLink` to load the next
+page. Links are restricted to the configured site's REST path. `getAllPages`
+is available for bounded aggregation with `maxPages` and `maxItems` limits.
+
+The `filter` value is intentionally an explicitly supplied string in this
+increment. The package does not parse or authorize arbitrary OData expressions;
+applications must build filters from trusted, allowlisted fields and values.
 
 ## Creating a client
 
@@ -228,8 +267,8 @@ This package does **not** provide:
 - a backend, proxy, or server-side credential store;
 - app-only authentication, token acquisition, or privileged access;
 - Microsoft Graph access;
-- an ORM, repositories, schemas, query builder, or domain mappers;
-- automatic pagination, filtering, OData construction, or data validation;
+- an ORM, domain repositories, schemas, or domain mappers;
+- a general OData query builder or automatic data validation;
 - automatic conflict resolution or unconditional write safety;
 - automatic retries for writes or ambiguous operations;
 - batch orchestration, file-specific abstractions, provisioning, migrations,

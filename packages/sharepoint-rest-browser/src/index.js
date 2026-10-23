@@ -172,3 +172,4 @@ export function createSharePointRestClient({
 }
 
 export { DEFAULT_ACCEPT };
+export { createSharePointListClient } from "./list-client.js";
