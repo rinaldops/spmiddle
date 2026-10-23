@@ -179,3 +179,5 @@ export { createProvisioningManager } from "./provisioning.js";
 export { createMapper, mapItem, mapInput, mapCreate, mapUpdate } from "./mapper.js";
 export { normalizeQuery, buildQuery } from "./query.js";
 export { createRepository } from "./repository.js";
+export { sanitizeRichText, validateSafeUrl, validateContentLimits, createSafeLogger } from "./security.js";
+export { validateFileInput, createFileClient, createSharePointFileClient } from "./files.js";

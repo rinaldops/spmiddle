@@ -159,6 +159,46 @@ not accepted by the controlled query API. `createMapper` validates unknown,
 required, and read-only fields and translates between domain names and
 SharePoint internal names.
 
+## Segurança, conteúdo rico e arquivos
+
+O pacote também exporta guardrails locais para conteúdo recebido pela aplicação:
+
+```js
+import {
+  sanitizeRichText,
+  validateSafeUrl,
+  validateContentLimits,
+  createSafeLogger,
+  createSharePointFileClient
+} from "@spmiddle/sharepoint-rest-browser";
+
+const safeHtml = sanitizeRichText(untrustedHtml);
+if (!validateSafeUrl(link, { allowRelative: true })) {
+  throw new Error("URL não permitida");
+}
+if (!validateContentLimits(description, { maxTextLength: 4000, maxBytes: 12000 })) {
+  throw new Error("Conteúdo excede os limites");
+}
+
+const files = createSharePointFileClient({
+  transport,
+  libraryPath: "/sites/example/Shared Documents",
+  maxSize: 10 * 1024 * 1024,
+  allowedMimeTypes: ["text/plain", "application/pdf"],
+  allowedExtensions: [".txt", ".pdf"]
+});
+```
+
+`validateFileInput` rejeita traversal, caminhos absolutos, URLs, conteúdo com
+aparência de Base64, limites excedidos e tipos/extensões fora da allowlist.
+Uploads não são repetidos automaticamente. As operações de arquivo usam um
+transporte injetado e caminhos REST server-relative explícitos.
+
+`sanitizeRichText` é um filtro conservador sem DOM; não é um parser HTML nem
+substitui CSP, Trusted Types, validação no servidor ou uma biblioteca de
+sanitização revisada. O middleware não simula permissões SharePoint. O logger
+seguro redige tokens, cookies, credenciais, digests e campos de autorização.
+
 ## Creating a client
 
 ```js
