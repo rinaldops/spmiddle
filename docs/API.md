@@ -66,6 +66,49 @@ The `filter` value is intentionally an explicitly supplied string in this
 increment. The package does not parse or authorize arbitrary OData expressions;
 applications must build filters from trusted, allowlisted fields and values.
 
+## Schemas and data sources
+
+The package also exposes local contracts for describing SharePoint structures and
+registering the sites and lists an application is allowed to use:
+
+```js
+import {
+  createDataSourceRegistry,
+  defineListSchema
+} from "@spmiddle/sharepoint-rest-browser";
+
+const taskSchema = defineListSchema({
+  key: "tasks",
+  internalName: "AppTasks",
+  displayName: "Tasks",
+  template: 100,
+  schemaVersion: 1,
+  fields: [
+    { internalName: "Title", type: "Text", required: true },
+    { internalName: "Status", type: "Choice", choices: ["Open", "Closed"] }
+  ],
+  indexes: [["Status"]]
+});
+
+const sources = createDataSourceRegistry({
+  allowedWebUrls: ["/sites/example"],
+  sources: [{
+    key: "tasks",
+    webUrl: "/sites/example",
+    listPath: "lists/getbytitle('Tasks')"
+  }]
+});
+
+const tasksFromRegistry = sources.getListClient("tasks");
+```
+
+Schemas are immutable, environment-independent declarations. Defining one never
+creates or modifies SharePoint structures. Provisioning is intentionally a
+future administrative layer. The source registry accepts only allowlisted,
+server-relative sites and resolves runtime clients by logical key, not by an
+arbitrary URL. A source may describe only a site; in that case
+`getListClient(key)` returns `undefined` until list metadata is registered.
+
 ## Creating a client
 
 ```js
