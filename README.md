@@ -44,6 +44,11 @@ frontend e não transforma a interface em uma camada de autorização. Consulte
 - upload de arquivos;
 - integração incremental com o `mse-platform`.
 
+O primeiro spike de consumidor está em
+[`examples/first-consumer-recursos/`](examples/first-consumer-recursos/). Ele
+valida localmente a compatibilidade do contrato de leitura do Explore Mais sem
+alterar o repositório `mse-platform` e sem acessar um tenant real.
+
 ## Escopo futuro
 
 Backend próprio, Microsoft Graph, processamento assíncrono e outras capacidades
