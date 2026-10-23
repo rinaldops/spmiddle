@@ -5,7 +5,7 @@
   "private": true,
   "exports": "./src/index.js",
   "scripts": {
-    "test": "node test/transport.test.js && node test/list-client.test.js && node test/schema.test.js && node test/data-sources.test.js && npm run test:contract",
+    "test": "node test/transport.test.js && node test/list-client.test.js && node test/schema.test.js && node test/data-sources.test.js && node test/provisioning.test.js && npm run test:contract",
     "test:contract": "node test/contract/run-current.js"
   }
 }

@@ -175,3 +175,4 @@ export { DEFAULT_ACCEPT };
 export { createSharePointListClient } from "./list-client.js";
 export { defineListSchema, validateListSchema } from "./schema.js";
 export { createDataSourceRegistry } from "./data-sources.js";
+export { createProvisioningManager } from "./provisioning.js";
