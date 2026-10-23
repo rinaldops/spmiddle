@@ -5,6 +5,7 @@
   "private": true,
   "exports": "./src/index.js",
   "scripts": {
-    "test": "node test/transport.test.js"
+    "test": "node test/transport.test.js && npm run test:contract",
+    "test:contract": "node test/contract/run-current.js"
   }
 }
