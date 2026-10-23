@@ -7,8 +7,10 @@
 import { fileURLToPath } from "node:url";
 import {
   defineListSchema,
+  createMapper,
   createDataSourceRegistry,
-  createProvisioningManager
+  createProvisioningManager,
+  createRepository
 } from "../../packages/sharepoint-rest-browser/src/index.js";
 
 const site = "/sites/example";
@@ -143,11 +145,19 @@ export function createExampleComposition() {
     transport: registry.getTransport("records"),
     listClient
   });
-  return { schema, transport, registry, listClient, manager };
+  const mapper = createMapper({
+    mapping: {
+      id: { internalName: "Id", readOnly: true },
+      title: { internalName: "Title", required: true },
+      notes: "Notes"
+    }
+  });
+  const repository = createRepository({ source: "records", schema, mapper, client: listClient });
+  return { schema, transport, registry, listClient, manager, repository };
 }
 
 export async function runExample() {
-  const { manager, listClient } = createExampleComposition();
+  const { manager, repository } = createExampleComposition();
   console.log("1. inspect (read-only)");
   console.dir(await manager.inspect(), { depth: null });
   console.log("2. explicit apply");
@@ -155,15 +165,15 @@ export async function runExample() {
   console.log("3. verify");
   console.dir(await manager.verify(), { depth: null });
   console.log("4. create item");
-  const created = await listClient.createListItem({ Title: "Placeholder item", Notes: "Placeholder notes" });
+  const created = await repository.create({ title: "Placeholder item", notes: "Placeholder notes" });
   console.dir(created, { depth: null });
   console.log("5. list items");
-  console.dir(await listClient.getListItems({ select: ["Id", "Title", "Notes"] }), { depth: null });
+  console.dir(await repository.findMany({ select: ["id", "title", "notes"] }), { depth: null });
   console.log("6. update with ETag");
-  const updated = await listClient.updateListItem(created.data.Id, { Notes: "Updated placeholder notes" }, { etag: created.etag });
+  const updated = await repository.update(created.id, { notes: "Updated placeholder notes" }, { etag: created.etag });
   console.dir(updated, { depth: null });
   console.log("7. delete with ETag");
-  console.dir(await listClient.deleteListItem(created.data.Id, { etag: updated.etag }), { depth: null });
+  console.dir(await repository.delete(created.id, { etag: updated.etag }), { depth: null });
   console.log("Done: all operations ran against memory; no network request was made.");
 }
 

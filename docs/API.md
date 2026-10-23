@@ -109,6 +109,56 @@ server-relative sites and resolves runtime clients by logical key, not by an
 arbitrary URL. A source may describe only a site; in that case
 `getListClient(key)` returns `undefined` until list metadata is registered.
 
+## Repositories, mappers, and controlled queries
+
+Repositories provide a domain-oriented API over a list client. They do not build
+arbitrary REST URLs and do not expose the raw SharePoint response envelope:
+
+```js
+import {
+  createMapper,
+  createRepository
+} from "@spmiddle/sharepoint-rest-browser";
+
+const mapper = createMapper({
+  mapping: {
+    id: { internalName: "Id", readOnly: true },
+    title: { internalName: "Title", required: true },
+    status: "Status"
+  }
+});
+
+const articles = createRepository({
+  source: "articles",
+  mapper,
+  client: sources.getListClient("articles")
+});
+
+const page = await articles.findMany({
+  select: ["id", "title", "status"],
+  filter: { field: "status", operator: "eq", value: "published" },
+  orderBy: [{ field: "title", direction: "asc" }],
+  pageSize: 20
+});
+
+const created = await articles.create({ title: "Review", status: "open" });
+const updated = await articles.update(created.id, { status: "closed" }, {
+  etag: created.etag
+});
+await articles.delete(updated.id, { etag: updated.etag });
+```
+
+The repository supports `findById`, `findMany`, `count`, `create`, `update`, and
+`delete`. `findMany` returns `{ items, page }`; mutation and single-item results
+are domain entities. The current ETag is available as non-enumerable `result.etag`
+metadata and must be supplied explicitly for updates and deletes.
+
+`normalizeQuery` and `buildQuery` accept only allow-listed fields and operators
+(`eq`, `ne`, `gt`, `ge`, `lt`, `le`, `contains`, and `beginsWith`). Raw OData is
+not accepted by the controlled query API. `createMapper` validates unknown,
+required, and read-only fields and translates between domain names and
+SharePoint internal names.
+
 ## Creating a client
 
 ```js
