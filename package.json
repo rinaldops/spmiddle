@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm --prefix packages/sharepoint-rest-browser test"
+    "test": "npm --prefix packages/sharepoint-rest-browser test && node examples/integrated-local/integration.test.js"
   },
   "engines": {
     "node": ">=20"
