@@ -10,6 +10,27 @@ backend próprio nem um ORM completo na primeira fase.
 A diretriz e o planejamento completos estão em
 [`PLANO-SPMIDDLE.md`](PLANO-SPMIDDLE.md).
 
+## Estado do desenvolvimento
+
+O primeiro incremento implementa o transporte REST independente em
+`packages/sharepoint-rest-browser`. Ele ainda não é o cliente completo de listas
+nem substitui o `mse-platform`.
+
+```powershell
+npm test
+```
+
+O pacote de transporte não depende de bibliotecas externas, DOM, Modern Script
+Editor ou Site Kernel. O acesso a um tenant real não faz parte da suíte local;
+os testes usam um transporte HTTP simulado.
+
+## Limites de segurança
+
+O SPMIDDLE executado no navegador usa a identidade e as permissões do usuário
+corrente. Ele não fornece autenticação privilegiada, não protege segredos no
+frontend e não transforma a interface em uma camada de autorização. Consulte
+[`SECURITY.md`](SECURITY.md) antes de integrar o projeto.
+
 ## Objetivos iniciais
 
 - cliente SharePoint REST reutilizável;

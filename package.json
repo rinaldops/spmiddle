@@ -1,0 +1,14 @@
+{
+  "name": "spmiddle",
+  "version": "0.1.0",
+  "description": "Client-side JavaScript middleware for SharePoint data access",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm --prefix packages/sharepoint-rest-browser test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
