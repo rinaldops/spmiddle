@@ -116,6 +116,12 @@ local, não importa o consumidor e não executa provisioning.
 5. A política de URLs do SPMIDDLE é mais explícita e restritiva; registros
    existentes devem ser auditados antes de habilitar um adaptador real.
 
+`examples/first-consumer-recursos/security-parity.test.js` cobre localmente a
+decisão de segurança: URLs HTTP(S) sem credenciais são aceitas, esquemas ativos
+e URLs ambíguas são rejeitados, rich text executável é removido e limites de
+conteúdo são aplicados. Isso valida a política do adaptador, não a segurança de
+dados já existentes no SharePoint.
+
 ## Dependências e candidatos de extração
 
 ### Candidatos reutilizáveis, após revisão

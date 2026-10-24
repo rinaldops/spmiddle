@@ -157,6 +157,16 @@ Esse teste compara identidade, versão, campos, defaults e índices usando um
 contrato legado sanitizado. As diferenças de tipo entre `URL` e `Categoria` são
 asserções explícitas e não são tratadas como equivalência acidental.
 
+A verificação dos guardrails de segurança pode ser executada com:
+
+```powershell
+node examples/first-consumer-recursos/security-parity.test.js
+```
+
+Ela cobre URLs HTTP(S) seguras, rejeição de esquemas ativos, remoção de conteúdo
+executável em descrições e limites básicos de conteúdo. O teste não acessa as
+URLs; todos os hosts são placeholders.
+
 O exemplo integrado existente demonstra `inspect`, `apply`, `verify` e CRUD
 com ETag usando memória. Para este spike, a execução equivalente deve semear
 somente itens fictícios de `RecursosLinks`, aplicar o filtro de ativos, ordenar
