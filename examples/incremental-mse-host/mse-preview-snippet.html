@@ -1,0 +1,264 @@
+<style>
+  [data-spmiddle-mse-root] {
+    font-family: "Petrobras Sans", Arial, sans-serif;
+    color: #242424;
+    background: #fff;
+    border: 1px solid #e3e9ed;
+    padding: 24px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  [data-spmiddle-mse-root] h2 {
+    color: #008542;
+    margin: 0 0 8px;
+  }
+
+  [data-spmiddle-mse-root] button {
+    background: #008542;
+    color: #fff;
+    border: 0;
+    padding: 8px 14px;
+    margin: 4px;
+    cursor: pointer;
+  }
+
+  [data-spmiddle-mse-root] input,
+  [data-spmiddle-mse-root] select {
+    padding: 8px;
+    border: 1px solid #e3e9ed;
+    margin: 4px;
+  }
+
+  [data-spmiddle-mse-root] .spmiddle-status {
+    border-left: 4px solid #fdc82f;
+    padding: 8px;
+    margin: 12px 0;
+  }
+
+  [data-spmiddle-mse-root] .spmiddle-items {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  [data-spmiddle-mse-root] .spmiddle-item {
+    border: 1px solid #e3e9ed;
+    padding: 12px;
+  }
+
+  [data-spmiddle-mse-root] .spmiddle-metrics {
+    font-size: 12px;
+    color: #75787b;
+    margin-top: 16px;
+  }
+</style>
+
+<section
+  data-spmiddle-mse-root
+  data-spmiddle-instance="preview"
+  aria-labelledby="spmiddle-title"
+>
+  <h2 id="spmiddle-title">SPMIDDLE — validação incremental</h2>
+
+  <p>
+    Host de validação com dados placeholder.
+    Ações internas atualizam somente a região afetada.
+  </p>
+
+  <div>
+    <label for="spmiddle-query">Consulta</label>
+    <input
+      id="spmiddle-query"
+      type="search"
+      placeholder="&lt;consulta&gt;"
+    />
+    <button type="button" data-spmiddle-action="query">
+      Consultar
+    </button>
+
+    <label for="spmiddle-filter">Filtro</label>
+    <select id="spmiddle-filter">
+      <option value="all">Todos</option>
+      <option value="&lt;category-a&gt;">&lt;category-a&gt;</option>
+      <option value="&lt;category-b&gt;">&lt;category-b&gt;</option>
+    </select>
+
+    <button type="button" data-spmiddle-action="filter">Filtrar</button>
+    <button type="button" data-spmiddle-action="update">
+      Atualizar item
+    </button>
+    <button type="button" data-spmiddle-action="layout">
+      Alternar layout
+    </button>
+    <button type="button" data-spmiddle-action="external">
+      Fallback externo
+    </button>
+  </div>
+
+  <div
+    class="spmiddle-status"
+    role="status"
+    aria-live="polite"
+    data-spmiddle-status
+  >
+    Pronto
+  </div>
+
+  <div class="spmiddle-items" data-spmiddle-items aria-busy="false"></div>
+  <div class="spmiddle-metrics" data-spmiddle-metrics></div>
+</section>
+
+<script>
+(function () {
+  "use strict";
+
+  var root = document.querySelector(
+    '[data-spmiddle-mse-root][data-spmiddle-instance="preview"]'
+  );
+
+  if (!root || root.dataset.mounted === "true") {
+    return;
+  }
+
+  root.dataset.mounted = "true";
+
+  var items = [
+    {
+      id: "<item-a>",
+      title: "<title-a>",
+      category: "<category-a>",
+      value: "<value-a>"
+    },
+    {
+      id: "<item-b>",
+      title: "<title-b>",
+      category: "<category-b>",
+      value: "<value-b>"
+    }
+  ];
+
+  var state = {
+    query: "",
+    filter: "all",
+    layout: "list"
+  };
+
+  var metrics = {
+    rootMounts: 1,
+    fullReloads: 0,
+    internalNavigations: 0,
+    affectedRegions: [],
+    fallbacks: 0
+  };
+
+  var itemsRegion = root.querySelector("[data-spmiddle-items]");
+  var statusRegion = root.querySelector("[data-spmiddle-status]");
+  var metricsRegion = root.querySelector("[data-spmiddle-metrics]");
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>]/g, function (character) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;"
+      }[character] || character;
+    });
+  }
+
+  function getVisibleItems() {
+    var query = state.query.toLowerCase();
+
+    return items.filter(function (item) {
+      var matchesFilter =
+        state.filter === "all" || item.category === state.filter;
+
+      var matchesQuery =
+        !query ||
+        item.title.toLowerCase().indexOf(query) >= 0 ||
+        item.value.toLowerCase().indexOf(query) >= 0;
+
+      return matchesFilter && matchesQuery;
+    });
+  }
+
+  function renderItems() {
+    var visibleItems = getVisibleItems();
+
+    itemsRegion.innerHTML = visibleItems
+      .map(function (item) {
+        return (
+          '<article class="spmiddle-item">' +
+            "<strong>" + escapeHtml(item.title) + "</strong>" +
+            "<br>" +
+            "<span>" +
+              escapeHtml(item.category) +
+              " — " +
+              escapeHtml(item.value) +
+            "</span>" +
+          "</article>"
+        );
+      })
+      .join("") || "<p>&lt;empty&gt;</p>";
+
+    itemsRegion.dataset.layout = state.layout;
+    itemsRegion.setAttribute("aria-busy", "false");
+  }
+
+  function renderMetrics() {
+    metricsRegion.textContent =
+      "rootMounts=" + metrics.rootMounts +
+      " fullReloads=" + metrics.fullReloads +
+      " internalNavigations=" + metrics.internalNavigations +
+      " affectedRegion=" + metrics.affectedRegions.join(",") +
+      " fallbacks=" + metrics.fallbacks;
+  }
+
+  function applyInternalUpdate(region, message) {
+    metrics.affectedRegions.push(region);
+    statusRegion.textContent = message;
+    renderItems();
+    renderMetrics();
+  }
+
+  root
+    .querySelector('[data-spmiddle-action="query"]')
+    .addEventListener("click", function () {
+      state.query = root.querySelector("#spmiddle-query").value;
+      applyInternalUpdate("items", "Consulta interna concluída");
+    });
+
+  root
+    .querySelector('[data-spmiddle-action="filter"]')
+    .addEventListener("click", function () {
+      state.filter = root.querySelector("#spmiddle-filter").value;
+      applyInternalUpdate("items", "Filtro interno concluído");
+    });
+
+  root
+    .querySelector('[data-spmiddle-action="update"]')
+    .addEventListener("click", function () {
+      items[0].value = "<updated-value>";
+      applyInternalUpdate("items", "Atualização interna concluída");
+    });
+
+  root
+    .querySelector('[data-spmiddle-action="layout"]')
+    .addEventListener("click", function () {
+      state.layout = state.layout === "list" ? "compact" : "list";
+      applyInternalUpdate("layout", "Layout interno atualizado");
+    });
+
+  root
+    .querySelector('[data-spmiddle-action="external"]')
+    .addEventListener("click", function () {
+      metrics.fallbacks += 1;
+      statusRegion.textContent =
+        "Fallback externo registrado; nenhuma navegação automática executada";
+      renderMetrics();
+    });
+
+  renderItems();
+  renderMetrics();
+})();
+</script>
