@@ -30,6 +30,18 @@ O contrato comum é deliberadamente comportamental, não uma API única de host.
 Assim, um host pode seguir o ciclo de vida de uma web part e outro pode somente
 produzir um render model, sem introduzir uma abstração artificial no núcleo.
 
+## Atualização sem reload da página
+
+Hosts que operam dentro de uma página MSE devem manter a raiz montada e tratar
+consultas, CRUD, filtros e mudanças de layout como atualizações incrementais
+sempre que não houver mudança de contexto. O núcleo fornece estado e dados; o
+adaptador decide quais regiões renderizar, preservando as demais. Não usar
+`location.reload()` ou navegação para a mesma ASPX como mecanismo padrão.
+
+Os critérios de aceite, classificação de ações, concorrência e fallback estão em
+[`INCREMENTAL-HOST-UPDATES.md`](INCREMENTAL-HOST-UPDATES.md). Os exemplos locais
+atuais ainda não são uma validação de página ASPX real.
+
 ## Diferenças intencionais
 
 - O host standalone demonstra a menor composição possível.

@@ -21,6 +21,8 @@ houver autorização específica, executar um piloto controlado em produção.
 - Nenhum código é copiado sem proveniência, licença e revisão de dependências.
 - O transporte real continua sujeito à sessão, permissões, ETags, digest,
   throttling e políticas do SharePoint.
+- Uma página ASPX já carregada deve manter o container MSE vivo: ações internas
+  devem atualizar somente dados, estado ou layout afetados, sem reload completo.
 - A migração deve ser incremental, observável e reversível; não substituir todo
   o `core` em uma única alteração.
 - Dados de tenant, URLs, GUIDs, cookies, tokens e evidências operacionais ficam

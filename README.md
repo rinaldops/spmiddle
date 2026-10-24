@@ -52,6 +52,10 @@ alterar o repositório `mse-platform` e sem acessar um tenant real.
 O plano formal para uma integração futura, ainda sem migração autorizada, está
 em [`docs/INTEGRATION-MSE-PLATFORM.md`](docs/INTEGRATION-MSE-PLATFORM.md).
 
+A diretriz para manter o container MSE vivo e evitar reload completo da página
+em ações internas está em
+[`docs/INCREMENTAL-HOST-UPDATES.md`](docs/INCREMENTAL-HOST-UPDATES.md).
+
 ## Escopo futuro
 
 Backend próprio, Microsoft Graph, processamento assíncrono e outras capacidades

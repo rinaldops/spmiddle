@@ -238,6 +238,19 @@ O SPMIDDLE não terá dependência de:
 
 Esses recursos poderão ser usados somente por adaptadores específicos de host.
 
+### 6.1 Atualização incremental no host
+
+Quando uma página ASPX já estiver carregada, ações que possam ser resolvidas
+com o código e os dados disponíveis no MSE devem permanecer confinadas ao
+container MSE. O host deve atualizar somente estado, dados ou layout afetados,
+sem recarregar a página inteira ou destruir componentes não relacionados.
+
+Essa regra não coloca DOM ou navegação no núcleo. Ela define uma obrigação dos
+adaptadores de host: raiz estável, ações internas sem navegação ASPX, estados
+observáveis, proteção contra respostas obsoletas e fallback explícito somente
+para mudanças externas ou de contexto. Os critérios completos estão em
+[`docs/INCREMENTAL-HOST-UPDATES.md`](docs/INCREMENTAL-HOST-UPDATES.md).
+
 ---
 
 ## 7. Relação com o `mse-platform`
