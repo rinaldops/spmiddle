@@ -59,6 +59,9 @@ em ações internas está em
 O contrato local executável dessa diretriz está em
 [`examples/incremental-mse-host/`](examples/incremental-mse-host/).
 
+O runbook para futura validação ASPX com uma instância isolada do FIORI-AUTO está
+em [`docs/ASPX-INCREMENTAL-VALIDATION-RUNBOOK.md`](docs/ASPX-INCREMENTAL-VALIDATION-RUNBOOK.md).
+
 ## Escopo futuro
 
 Backend próprio, Microsoft Graph, processamento assíncrono e outras capacidades

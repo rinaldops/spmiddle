@@ -124,3 +124,8 @@ Uma validação real deverá usar o FIORI-AUTO obrigatório do workspace, destin
 produção explicitamente autorizado, dados mínimos e um plano de rollback. O
 primeiro teste operacional deve medir que uma ação interna preserva a página e
 atualiza somente o container MSE.
+
+O procedimento operacional detalhado está em
+[`ASPX-INCREMENTAL-VALIDATION-RUNBOOK.md`](ASPX-INCREMENTAL-VALIDATION-RUNBOOK.md).
+Ele exige uma instância própria e isolada do FIORI-AUTO para não interferir em
+outras equipes.
