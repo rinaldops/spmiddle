@@ -296,6 +296,11 @@ A extração deverá ser incremental:
 
 Não substituir todo o `core` em uma única alteração.
 
+Os critérios de entrada, gates, piloto, aceite e rollback estão detalhados em
+[`docs/INTEGRATION-MSE-PLATFORM.md`](docs/INTEGRATION-MSE-PLATFORM.md). O
+documento é apenas planejamento e não autoriza alterações no `mse-platform` ou
+acesso a um tenant real.
+
 ---
 
 ## 8. Modelo de dados e vocabulário

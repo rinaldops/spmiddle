@@ -49,6 +49,9 @@ O primeiro spike de consumidor está em
 valida localmente a compatibilidade do contrato de leitura do Explore Mais sem
 alterar o repositório `mse-platform` e sem acessar um tenant real.
 
+O plano formal para uma integração futura, ainda sem migração autorizada, está
+em [`docs/INTEGRATION-MSE-PLATFORM.md`](docs/INTEGRATION-MSE-PLATFORM.md).
+
 ## Escopo futuro
 
 Backend próprio, Microsoft Graph, processamento assíncrono e outras capacidades
