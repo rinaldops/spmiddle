@@ -38,6 +38,20 @@ O `dry-run.js` emite um relatório JSON sanitizado no formato do runbook, com
 `mode: "local-dry-run"`. Seus valores de reload, remount e navegação são
 evidência do fake host, não da página ASPX.
 
+## Runtime externo para o Modern Script Editor
+
+Em uma página real, o diagnóstico mostrou que o Modern Script Editor renderizou
+o HTML/CSS, mas não executou o `<script>` inline. O runtime separado está em
+[`mse-preview-runtime.js`](mse-preview-runtime.js). O arquivo deve ser publicado
+como asset externo em uma pasta versionada e autorizada, sem sobrescrever uma
+versão existente. O trecho de referência está em
+[`mse-preview-external-script.html`](mse-preview-external-script.html).
+
+O HTML do snippet permanece responsável pela estrutura e o runtime externo pela
+montagem e pelos eventos. A publicação do asset e a substituição do trecho no
+Modern Script Editor são etapas operacionais do tenant; não são feitas pela
+suíte local.
+
 ## Limites
 
 O exemplo não autoriza navegação corporativa, não acessa tenant, não altera o
