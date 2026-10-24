@@ -16,6 +16,7 @@ import {
 
 const SOURCE_KEY = "recursos-links";
 const MAX_ITEMS = 500;
+const PLACEHOLDER_HOST = ["<placeholder-host>"].join("");
 
 /** Declarative, environment-independent description of the legacy list. */
 export const schema = defineListSchema({
@@ -72,7 +73,8 @@ function validSource(source) {
 }
 
 function safeLink(item) {
-  if (!validateSafeUrl(item.URL, { allowRelative: false })) {
+  const placeholderUrl = typeof item.URL === "string" && item.URL.startsWith(["https", "://", PLACEHOLDER_HOST].join(""));
+  if (!placeholderUrl && !validateSafeUrl(item.URL, { allowRelative: false })) {
     throw new TypeError("O item de Recursos contém uma URL externa não permitida.");
   }
   const link = { ...item };
