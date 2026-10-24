@@ -88,6 +88,18 @@ Resultado atual: a projeção local é equivalente para esse fluxo controlado. A
 consulta enviada pelo SPMIDDLE é verificada separadamente e permanece tipada,
 allowlisted e limitada.
 
+O próximo gate é a paridade declarativa do schema. Ela deve comparar versão,
+identidade da lista, campos obrigatórios, defaults e índices sem executar
+provisionamento. A diferença conhecida é intencional: o schema legado descreve
+`URL` como texto, enquanto o SPMIDDLE usa o tipo `URL` para aplicar validação
+mais explícita. Isso precisa ser confirmado como compatível antes de qualquer
+uso real.
+
+`examples/first-consumer-recursos/schema-parity.test.js` também registra as
+diferenças de representação de `URL`, `Categoria` e `Descricao` como exceções
+explícitas, além de verificar os campos comuns, defaults e índices. O teste é
+local, não importa o consumidor e não executa provisioning.
+
 ### Diferenças que ainda exigem decisão
 
 1. O consumidor legado usa o filtro textual `Ativo eq 1`; o SPMIDDLE usa filtro

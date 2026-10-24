@@ -147,6 +147,16 @@ Ele usa uma projeção comportamental sanitizada do serviço legado e um transpo
 fake. Não importa nem altera o `mse-platform` e não comprova equivalência em um
 tenant SharePoint real.
 
+A paridade declarativa do schema pode ser executada com:
+
+```powershell
+node examples/first-consumer-recursos/schema-parity.test.js
+```
+
+Esse teste compara identidade, versão, campos, defaults e índices usando um
+contrato legado sanitizado. As diferenças de tipo entre `URL` e `Categoria` são
+asserções explícitas e não são tratadas como equivalência acidental.
+
 O exemplo integrado existente demonstra `inspect`, `apply`, `verify` e CRUD
 com ETag usando memória. Para este spike, a execução equivalente deve semear
 somente itens fictícios de `RecursosLinks`, aplicar o filtro de ativos, ordenar
