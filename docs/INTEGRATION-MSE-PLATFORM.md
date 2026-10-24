@@ -28,6 +28,10 @@ houver autorização específica, executar um piloto controlado em produção.
 
 ## Critérios de entrada
 
+O inventário inicial sanitizado e a matriz de contratos estão em
+[`MSE-PLATFORM-INVENTORY.md`](MSE-PLATFORM-INVENTORY.md). Ele é uma entrada de
+planejamento, não uma autorização para alterar o consumidor.
+
 Antes de qualquer piloto, devem existir:
 
 1. inventário aprovado dos consumidores e fluxos afetados;
