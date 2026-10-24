@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm --prefix packages/sharepoint-rest-browser test && node examples/integrated-local/integration.test.js && node examples/first-consumer-recursos/adapter.test.js && node examples/standalone-host/host.test.js && node examples/react-compatible-host/host.test.js && node examples/spfx-compatible-host/host.test.js"
+    "test": "npm --prefix packages/sharepoint-rest-browser test && node examples/integrated-local/integration.test.js && node examples/first-consumer-recursos/adapter.test.js && node examples/first-consumer-recursos/parity.test.js && node examples/standalone-host/host.test.js && node examples/react-compatible-host/host.test.js && node examples/spfx-compatible-host/host.test.js"
   },
   "engines": {
     "node": ">=20"

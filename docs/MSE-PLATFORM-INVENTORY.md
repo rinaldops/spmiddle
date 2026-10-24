@@ -76,11 +76,24 @@ leitura com:
 Os hosts standalone, React-compatible e SPFx-compatible consomem essa mesma
 fronteira sem duplicar a consulta.
 
+### Resultado da paridade local
+
+`examples/first-consumer-recursos/parity.test.js` compara uma projeção
+comportamental sanitizada do serviço legado com a saída do adaptador SPMIDDLE.
+O teste cobre filtro de ativos, ordenação, fallback `Outros`, forma dos links e
+exclusão de itens inativos. Ele usa somente transporte fake e placeholders; não
+importa o `mse-platform` nem prova equivalência em SharePoint real.
+
+Resultado atual: a projeção local é equivalente para esse fluxo controlado. A
+consulta enviada pelo SPMIDDLE é verificada separadamente e permanece tipada,
+allowlisted e limitada.
+
 ### Diferenças que ainda exigem decisão
 
 1. O consumidor legado usa o filtro textual `Ativo eq 1`; o SPMIDDLE usa filtro
-   tipado com booleano `true`. Deve ser validado se ambos representam o mesmo
-   comportamento no destino autorizado.
+   tipado com booleano `true`. A paridade local cobre a semântica dos dados, mas
+   ainda deve ser validado se ambos representam o mesmo comportamento no destino
+   autorizado.
 2. O consumidor visual aceita filtragem, busca e modos de apresentação em
    memória; isso permanece responsabilidade do host/UI, não do middleware.
 3. O consumidor possui caminhos antigos de loader e provisionamento versionado;

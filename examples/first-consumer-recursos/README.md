@@ -137,6 +137,16 @@ npm test
 node examples/integrated-local/app.js
 ```
 
+O teste de paridade local do contrato legado pode ser executado isoladamente:
+
+```powershell
+node examples/first-consumer-recursos/parity.test.js
+```
+
+Ele usa uma projeção comportamental sanitizada do serviço legado e um transporte
+fake. Não importa nem altera o `mse-platform` e não comprova equivalência em um
+tenant SharePoint real.
+
 O exemplo integrado existente demonstra `inspect`, `apply`, `verify` e CRUD
 com ETag usando memória. Para este spike, a execução equivalente deve semear
 somente itens fictícios de `RecursosLinks`, aplicar o filtro de ativos, ordenar
