@@ -6,6 +6,11 @@
 validação operacional futura do host MSE incremental. Ele não contém destino
 corporativo, não abre navegador e não autoriza acesso a SharePoint.
 
+O dry-run local correspondente está em
+[`examples/incremental-mse-host/dry-run.js`](../examples/incremental-mse-host/dry-run.js).
+Ele exercita somente o fake host e deve ser identificado por
+`mode: "local-dry-run"`; seus números não são evidência de uma página ASPX.
+
 ## Objetivo
 
 Comprovar, em uma página ASPX autorizada que já contenha o MSE, que uma ação

@@ -25,12 +25,18 @@ A partir da raiz do SPMIDDLE:
 
 ```powershell
 node examples/incremental-mse-host/host.test.js
+node examples/incremental-mse-host/dry-run.test.js
 node examples/incremental-mse-host/app.js
+node examples/incremental-mse-host/dry-run.js
 npm test
 ```
 
 Uma execução verde comprova somente o contrato local. Ela não demonstra ainda o
 comportamento de uma página ASPX real, acessibilidade visual ou publicação.
+
+O `dry-run.js` emite um relatório JSON sanitizado no formato do runbook, com
+`mode: "local-dry-run"`. Seus valores de reload, remount e navegação são
+evidência do fake host, não da página ASPX.
 
 ## Limites
 
