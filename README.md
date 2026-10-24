@@ -56,6 +56,9 @@ A diretriz para manter o container MSE vivo e evitar reload completo da página
 em ações internas está em
 [`docs/INCREMENTAL-HOST-UPDATES.md`](docs/INCREMENTAL-HOST-UPDATES.md).
 
+O contrato local executável dessa diretriz está em
+[`examples/incremental-mse-host/`](examples/incremental-mse-host/).
+
 ## Escopo futuro
 
 Backend próprio, Microsoft Graph, processamento assíncrono e outras capacidades
