@@ -1,4 +1,4 @@
-﻿/* SPMIDDLE CAMAP read-only runtime: Id/Title only, bounded to 50 items. */
+/* SPMIDDLE CAMAP read-only runtime: Id/Title only, bounded to 50 items. */
 (function () {
   "use strict";
 
@@ -80,7 +80,7 @@
     itemsRegion.setAttribute("aria-busy", "true");
 
     var path =
-      "/_api/web/lists/getbytitle('CAMAPPublicacoes')/items" +
+      "/teams/camap-agp/_api/web/lists/getbytitle('MSE Publicacoes')/items" +
       "?$select=Id,Title&$top=50";
 
     fetch(path, {
