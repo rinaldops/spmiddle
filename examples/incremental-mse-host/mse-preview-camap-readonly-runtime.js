@@ -1,4 +1,4 @@
-/* SPMIDDLE CAMAP read-only runtime: Id/Title only, bounded to 50 items. */
+/* SPMIDDLE CAMAP read-only runtime: Id/Title/Category, bounded to 50 items. */
 (function () {
   "use strict";
 
@@ -12,7 +12,7 @@
 
   root.dataset.mounted = "true";
 
-  var state = { query: "", layout: "list" };
+  var state = { query: "", category: "all", layout: "list" };
   var metrics = {
     rootMounts: 1,
     fullReloads: 0,
@@ -50,7 +50,11 @@
   function visibleItems() {
     var query = state.query.toLowerCase();
     return items.filter(function (item) {
-      return !query || item.title.toLowerCase().indexOf(query) >= 0;
+      var matchesQuery =
+        !query || item.title.toLowerCase().indexOf(query) >= 0;
+      var matchesCategory =
+        state.category === "all" || item.category === state.category;
+      return matchesQuery && matchesCategory;
     });
   }
 
@@ -60,7 +64,8 @@
       return (
         '<article class="spmiddle-item">' +
           "<strong>" + escapeHtml(item.title) + "</strong>" +
-          "<br><span>Registro " + escapeHtml(item.id) + "</span>" +
+          "<br><span>Categoria: " + escapeHtml(item.category || "(sem categoria)") +
+          "</span><br><span>Registro " + escapeHtml(item.id) + "</span>" +
         "</article>"
       );
     }).join("") || "<p>Nenhum registro encontrado.</p>";
@@ -81,7 +86,7 @@
 
     var path =
       "/teams/camap-agp/_api/web/lists/getbytitle('MSE Publicacoes')/items" +
-      "?$select=Id,Title&$top=50";
+      "?$select=Id,Title,CategoriaTexto&$top=50";
 
     fetch(path, {
       method: "GET",
@@ -98,7 +103,8 @@
         items = (payload.value || []).map(function (item) {
           return {
             id: item.Id,
-            title: item.Title || "(sem título)"
+            title: item.Title || "(sem título)",
+            category: item.CategoriaTexto || ""
           };
         });
         statusRegion.textContent =
@@ -126,7 +132,8 @@
   root.querySelector('[data-spmiddle-action="filter"]').addEventListener(
     "click",
     function () {
-      updateItems("Filtro interno concluído");
+      state.category = root.querySelector("#spmiddle-filter").value;
+      updateItems("Filtro por categoria concluído");
     }
   );
 
