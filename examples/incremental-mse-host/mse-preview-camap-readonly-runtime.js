@@ -25,6 +25,7 @@
   var statusRegion = root.querySelector("[data-spmiddle-status]");
   var metricsRegion = root.querySelector("[data-spmiddle-metrics]");
   var queryInput = root.querySelector("#spmiddle-query");
+  var filterSelect = root.querySelector("#spmiddle-filter");
 
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, function (character) {
@@ -73,6 +74,25 @@
     itemsRegion.setAttribute("aria-busy", "false");
   }
 
+  function renderFilterOptions() {
+    var categories = items
+      .map(function (item) { return item.category; })
+      .filter(function (category, index, values) {
+        return category && values.indexOf(category) === index;
+      })
+      .sort(function (left, right) {
+        return left.localeCompare(right, "pt-BR");
+      });
+    var selected = state.category;
+    filterSelect.innerHTML = '<option value="all">Todos</option>' +
+      categories.map(function (category) {
+        return '<option value="' + escapeHtml(category) + '">' +
+          escapeHtml(category) + '</option>';
+      }).join("");
+    filterSelect.value = categories.indexOf(selected) >= 0 ? selected : "all";
+    state.category = filterSelect.value;
+  }
+
   function updateItems(message) {
     metrics.affectedRegions.push("items");
     statusRegion.textContent = message;
@@ -107,6 +127,7 @@
             category: item.CategoriaTexto || ""
           };
         });
+        renderFilterOptions();
         statusRegion.textContent =
           "Leitura concluída: " + items.length + " publicações";
         renderItems();
