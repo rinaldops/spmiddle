@@ -195,13 +195,14 @@ assets e não altera arquivos do `mse-platform`. Em particular, ele não deve:
 
 1. Fechar e versionar o contrato público do SPMIDDLE para fontes, query,
    paginação, mapper e erros.
-2. Implementar a consulta tipada equivalente ao filtro `Ativo eq 1` e confirmar
-   a semântica booleana no SharePoint real.
+2. Confirmar no SharePoint real que a consulta tipada `Ativo eq true` é
+   equivalente ao filtro legado `Ativo eq 1`; o adaptador local já normaliza
+   `1`/`true` na resposta fake, sem alterar a consulta enviada.
 3. Cobrir paginação, respostas vazias, throttling e limites; `top: 500` não deve
    ocultar a necessidade de cursor quando houver mais itens.
 4. Comparar, com fixtures controladas, o agrupamento e a ordenação do serviço
-   atual com o adaptador SPMIDDLE, incluindo categoria ausente e campos
-   opcionais.
+   atual com o adaptador SPMIDDLE, incluindo `Ativo` como `1`/`true`, categoria
+   ausente, categorias desconhecidas e campos opcionais.
 5. Validar schema versão 3, nomes internos, índices, permissões de leitura e
    a identidade física da lista em destino autorizado, sem provisionar por
    carregamento normal.

@@ -8,9 +8,9 @@ const source = {
 };
 
 const records = [
-  { Id: "<zeta-id>", Title: "<zeta-title>", URL: "https://<placeholder-host>/zeta", Categoria: "<category>", Descricao: "<zeta-description>", IconeChave: "<zeta-icon>", Ordem: 20, AbrirNovaJanela: true, Ativo: true },
+  { Id: "<zeta-id>", Title: "<zeta-title>", URL: "https://<placeholder-host>/zeta", Categoria: "<category>", Descricao: "<zeta-description>", IconeChave: "<zeta-icon>", Ordem: 20, AbrirNovaJanela: true, Ativo: 1 },
   { Id: "<alpha-id>", Title: "<alpha-title>", URL: "https://<placeholder-host>/alpha", Categoria: "<category>", Descricao: "<alpha-description>", IconeChave: "<alpha-icon>", Ordem: 10, AbrirNovaJanela: false, Ativo: true },
-  { Id: "<inactive-id>", Title: "<inactive-title>", URL: "https://<placeholder-host>/inactive", Categoria: "<category>", Descricao: "<inactive-description>", IconeChave: "<inactive-icon>", Ordem: 1, AbrirNovaJanela: false, Ativo: false },
+  { Id: "<inactive-id>", Title: "<inactive-title>", URL: "https://<placeholder-host>/inactive", Categoria: "<category>", Descricao: "<inactive-description>", IconeChave: "<inactive-icon>", Ordem: 1, AbrirNovaJanela: false, Ativo: 0 },
   { Id: "<other-id>", Title: "<other-title>", URL: "https://<placeholder-host>/other", Categoria: "", Descricao: "<other-description>", IconeChave: "<other-icon>", Ordem: 1, AbrirNovaJanela: true, Ativo: true }
 ];
 
@@ -18,7 +18,7 @@ const records = [
 // imported from mse-platform so this test cannot silently couple the projects.
 function legacyProjection(items) {
   const active = items
-    .filter((item) => item.Ativo === true)
+    .filter((item) => item.Ativo === true || item.Ativo === 1)
     .map((item) => ({ ...item, category: item.Categoria || "Outros" }))
     .sort((left, right) =>
       String(left.category).localeCompare(String(right.category), "pt-BR")
