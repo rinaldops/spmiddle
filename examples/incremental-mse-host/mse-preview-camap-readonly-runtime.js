@@ -100,8 +100,18 @@
       var rightDate = right.publicationDate
         ? Date.parse(right.publicationDate)
         : 0;
-      var difference = rightDate - leftDate;
-      return state.sort === "oldest" ? -difference : difference;
+      if (!leftDate && !rightDate) {
+        return 0;
+      }
+      if (!leftDate) {
+        return 1;
+      }
+      if (!rightDate) {
+        return -1;
+      }
+      return state.sort === "oldest"
+        ? leftDate - rightDate
+        : rightDate - leftDate;
     });
   }
 
