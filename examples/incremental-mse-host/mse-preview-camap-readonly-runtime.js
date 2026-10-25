@@ -35,30 +35,40 @@
   var statusSelect;
   var sortSelect;
 
-  function ensureStatusSelect() {
-    statusSelect = root.querySelector("#spmiddle-status-filter");
-    if (statusSelect) {
+  function ensureLabel(control, text) {
+    if (root.querySelector('label[for="' + control.id + '"]')) {
       return;
     }
-    statusSelect = document.createElement("select");
-    statusSelect.id = "spmiddle-status-filter";
+    var label = document.createElement("label");
+    label.htmlFor = control.id;
+    label.textContent = text;
+    control.parentNode.insertBefore(label, control);
+  }
+
+  function ensureStatusSelect() {
+    statusSelect = root.querySelector("#spmiddle-status-filter");
+    if (!statusSelect) {
+      statusSelect = document.createElement("select");
+      statusSelect.id = "spmiddle-status-filter";
+      statusSelect.innerHTML = '<option value="all">Todos os estados</option>';
+      filterSelect.parentNode.insertBefore(statusSelect, filterSelect.nextSibling);
+    }
     statusSelect.setAttribute("aria-label", "Filtro por estado editorial");
-    statusSelect.innerHTML = '<option value="all">Todos os estados</option>';
-    filterSelect.parentNode.insertBefore(statusSelect, filterSelect.nextSibling);
+    ensureLabel(statusSelect, "Estado editorial");
   }
 
   function ensureSortSelect() {
     sortSelect = root.querySelector("#spmiddle-sort");
-    if (sortSelect) {
-      return;
+    if (!sortSelect) {
+      sortSelect = document.createElement("select");
+      sortSelect.id = "spmiddle-sort";
+      sortSelect.innerHTML =
+        '<option value="newest">Mais recentes</option>' +
+        '<option value="oldest">Mais antigas</option>';
+      statusSelect.parentNode.insertBefore(sortSelect, statusSelect.nextSibling);
     }
-    sortSelect = document.createElement("select");
-    sortSelect.id = "spmiddle-sort";
     sortSelect.setAttribute("aria-label", "Ordenação por data de publicação");
-    sortSelect.innerHTML =
-      '<option value="newest">Mais recentes</option>' +
-      '<option value="oldest">Mais antigas</option>';
-    statusSelect.parentNode.insertBefore(sortSelect, statusSelect.nextSibling);
+    ensureLabel(sortSelect, "Ordenação por data de publicação");
   }
 
   function escapeHtml(value) {
