@@ -1,4 +1,4 @@
-/* SPMIDDLE CAMAP read-only runtime: Id/Title/Category/Status, bounded to 50 items. */
+/* SPMIDDLE CAMAP read-only runtime: Id/Title/Category/Status/Date, bounded to 50 items. */
 (function () {
   "use strict";
 
@@ -12,7 +12,13 @@
 
   root.dataset.mounted = "true";
 
-  var state = { query: "", category: "all", status: "all", layout: "list" };
+  var state = {
+    query: "",
+    category: "all",
+    status: "all",
+    sort: "newest",
+    layout: "list"
+  };
   var metrics = {
     rootMounts: 1,
     fullReloads: 0,
@@ -27,6 +33,7 @@
   var queryInput = root.querySelector("#spmiddle-query");
   var filterSelect = root.querySelector("#spmiddle-filter");
   var statusSelect;
+  var sortSelect;
 
   function ensureStatusSelect() {
     statusSelect = root.querySelector("#spmiddle-status-filter");
@@ -38,6 +45,20 @@
     statusSelect.setAttribute("aria-label", "Filtro por estado editorial");
     statusSelect.innerHTML = '<option value="all">Todos os estados</option>';
     filterSelect.parentNode.insertBefore(statusSelect, filterSelect.nextSibling);
+  }
+
+  function ensureSortSelect() {
+    sortSelect = root.querySelector("#spmiddle-sort");
+    if (sortSelect) {
+      return;
+    }
+    sortSelect = document.createElement("select");
+    sortSelect.id = "spmiddle-sort";
+    sortSelect.setAttribute("aria-label", "Ordenação por data de publicação");
+    sortSelect.innerHTML =
+      '<option value="newest">Mais recentes</option>' +
+      '<option value="oldest">Mais antigas</option>';
+    statusSelect.parentNode.insertBefore(sortSelect, statusSelect.nextSibling);
   }
 
   function escapeHtml(value) {
@@ -63,7 +84,7 @@
 
   function visibleItems() {
     var query = state.query.toLowerCase();
-    return items.filter(function (item) {
+    var visible = items.filter(function (item) {
       var matchesQuery =
         !query || item.title.toLowerCase().indexOf(query) >= 0;
       var matchesCategory =
@@ -71,6 +92,16 @@
       var matchesStatus =
         state.status === "all" || item.status === state.status;
       return matchesQuery && matchesCategory && matchesStatus;
+    });
+    return visible.sort(function (left, right) {
+      var leftDate = left.publicationDate
+        ? Date.parse(left.publicationDate)
+        : 0;
+      var rightDate = right.publicationDate
+        ? Date.parse(right.publicationDate)
+        : 0;
+      var difference = rightDate - leftDate;
+      return state.sort === "oldest" ? -difference : difference;
     });
   }
 
@@ -82,12 +113,24 @@
           "<strong>" + escapeHtml(item.title) + "</strong>" +
           "<br><span>Categoria: " + escapeHtml(item.category || "(sem categoria)") +
           "</span><br><span>Estado: " + escapeHtml(item.status || "(sem estado)") +
+          "</span><br><span>Publicado em: " +
+          escapeHtml(formatDate(item.publicationDate)) +
           "</span><br><span>Registro " + escapeHtml(item.id) + "</span>" +
         "</article>"
       );
     }).join("") || "<p>Nenhum registro encontrado.</p>";
     itemsRegion.dataset.layout = state.layout;
     itemsRegion.setAttribute("aria-busy", "false");
+  }
+
+  function formatDate(value) {
+    if (!value) {
+      return "(sem data)";
+    }
+    var date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? "(data inválida)"
+      : date.toLocaleDateString("pt-BR", { timeZone: "UTC" });
   }
 
   function renderFilterOptions() {
@@ -126,6 +169,10 @@
     state.status = statusSelect.value;
   }
 
+  function renderSortOptions() {
+    sortSelect.value = state.sort === "oldest" ? "oldest" : "newest";
+  }
+
   function updateItems(message) {
     metrics.affectedRegions.push("items");
     statusRegion.textContent = message;
@@ -139,7 +186,7 @@
 
     var path =
       "/teams/camap-agp/_api/web/lists/getbytitle('MSE Publicacoes')/items" +
-      "?$select=Id,Title,CategoriaTexto,EstadoEditorial&$top=50";
+      "?$select=Id,Title,CategoriaTexto,EstadoEditorial,DataPublicacao&$top=50";
 
     fetch(path, {
       method: "GET",
@@ -158,10 +205,12 @@
             id: item.Id,
             title: item.Title || "(sem título)",
             category: item.CategoriaTexto || "",
-            status: item.EstadoEditorial || ""
+            status: item.EstadoEditorial || "",
+            publicationDate: item.DataPublicacao || ""
           };
         });
         renderFilterOptions();
+        renderSortOptions();
         statusRegion.textContent =
           "Leitura concluída: " + items.length + " publicações";
         renderItems();
@@ -189,6 +238,7 @@
     function () {
       state.category = root.querySelector("#spmiddle-filter").value;
       state.status = statusSelect.value;
+      state.sort = sortSelect.value;
       updateItems("Filtros por categoria e estado concluídos");
     }
   );
@@ -224,6 +274,7 @@
   );
 
   ensureStatusSelect();
+  ensureSortSelect();
   renderMetrics();
   loadItems();
 })();
