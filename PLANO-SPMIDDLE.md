@@ -2,7 +2,7 @@
 
 **Status:** diretriz inicial; fundação técnica concluída e baseline CAMAP validado
 **Escopo desta versão:** middleware JavaScript client-side para acesso estruturado a dados do SharePoint  
-**Consumidor de referência para análise:** `web-devs/mse-platform`  
+**Consumidor de referência para análise:** `web-devs/mse-platform`
 **Local do projeto:** `web-devs/SPMIDDLE`
 
 ### Estado atual do planejamento — outubro de 2026
