@@ -37,7 +37,12 @@ análise.
 | Migrações | passos sequenciais de configuração e versões | schema versionado e provisionamento declarativo | requer mapeamento por recurso |
 | Módulos/UI | ciclo de vida, DOM, views, configurações e hosts MSE | fora do núcleo; hosts específicos | não migrar para o núcleo |
 
-## Primeiro fluxo candidato: Explore Mais
+## Primeiro fluxo candidato: Explore Mais — encerrado no site CAMAP
+
+O Explore Mais foi analisado como spike de compatibilidade, mas não é um módulo
+válido para o site CAMAP. Nenhuma migração foi executada. A lista técnica
+temporária `RecursosLinks` e seus fixtures de teste foram removidos do site, e
+a `Preview.aspx` permanece somente com o runtime CAMAP.
 
 ### Contrato legado observado
 
@@ -102,11 +107,11 @@ local, não importa o consumidor e não executa provisioning.
 
 ### Diferenças que ainda exigem decisão
 
-1. O consumidor legado usa o filtro textual `Ativo eq 1`; o SPMIDDLE usa filtro
-   tipado com booleano `true`. O adaptador local agora aceita `true` e `1` na
-   resposta (e rejeita `false`/`0`), mantendo a consulta enviada como booleano.
-   Isso fecha a diferença de representação no fake, mas ainda deve ser validado
-   se ambos representam o mesmo comportamento no destino autorizado.
+1. O consumidor legado usa o filtro textual `Ativo eq 1`. A validação real no
+   tenant confirmou que `Ativo eq 1` retorna os registros ativos, enquanto
+   `Ativo eq true` produz resultado incorreto para esse campo. O adaptador usa
+   `1` na consulta e aceita `true`/`1` na resposta para manter compatibilidade
+   entre transportes.
 2. O consumidor visual aceita filtragem, busca e modos de apresentação em
    memória; isso permanece responsabilidade do host/UI, não do middleware.
 3. O consumidor possui caminhos antigos de loader e provisionamento versionado;
@@ -161,14 +166,17 @@ independente e testes próprios.
 
 ## Próximo gate
 
-Antes de qualquer alteração no `mse-platform` ou acesso externo, ainda faltam:
+Para um novo consumidor, antes de qualquer alteração no `mse-platform` ou acesso
+externo, ainda faltam:
 
-1. aprovar o fluxo e o consumidor do piloto;
+1. identificar e aprovar um fluxo e consumidor que sejam válidos para o destino;
 2. fechar a matriz de equivalência do Explore Mais;
 3. revisar proveniência/licença de qualquer código candidato;
 4. definir permissões, observabilidade e rollback;
 5. manter o caminho legado selecionável;
 6. obter autorização operacional específica para produção.
 
-Até esses gates serem atendidos, a atividade permanece em testes locais com
-placeholders e transportes fakes.
+O Explore Mais não deve ser usado como consumidor do site CAMAP. Até que outro
+consumidor seja aprovado, a atividade permanece na fundação do SPMIDDLE, no
+runtime CAMAP somente leitura e em testes locais com placeholders e transportes
+fakes.

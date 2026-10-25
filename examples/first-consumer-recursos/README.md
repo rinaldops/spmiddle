@@ -1,10 +1,15 @@
-# Spike de compatibilidade — primeiro consumidor Recursos
+# Spike de compatibilidade — primeiro consumidor Recursos (encerrado no CAMAP)
 
 Este diretório documenta o spike de compatibilidade do primeiro consumidor do
 SPMIDDLE: o módulo **Explore Mais** (`mod_recursos`) do `mse-platform`. O spike
 é deliberadamente pequeno e local. Ele registra o contrato que precisa ser
 preservado e a composição que deverá ser exercitada antes de uma migração real;
 não é ainda uma migração do módulo nem uma alteração no `mse-platform`.
+
+> **Decisão operacional:** Explore Mais não é um módulo válido para o site CAMAP.
+> O spike permanece como referência local de contrato e não deve ser publicado
+> ou reativado nesse site. A lista técnica temporária `RecursosLinks` foi removida
+> após a validação.
 
 ## Objetivo e escopo
 
@@ -215,4 +220,6 @@ assets e não altera arquivos do `mse-platform`. Em particular, ele não deve:
 8. Só então preparar a migração incremental do consumidor; até esse aceite, o
    `mse-platform` permanece a fonte de comportamento e não recebe alterações.
 
-**Status:** spike documental/local; não aprovado para migração ou publicação.
+**Status:** spike documental/local encerrado como candidato do CAMAP; não aprovado
+para migração ou publicação. O contrato pode ser reutilizado somente após a
+aprovação de outro consumidor e destino válidos.

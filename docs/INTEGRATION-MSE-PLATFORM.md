@@ -2,12 +2,26 @@
 
 ## Status e propósito
 
-**Status:** planejamento; nenhuma migração autorizada ou executada.
+**Status:** fundação e piloto técnico CAMAP concluídos; nenhuma migração de
+módulo do `mse-platform` autorizada ou executada.
 
 Este documento define as condições para avaliar uma integração futura entre o
 SPMIDDLE e o `mse-platform`. Ele não autoriza alterações no repositório do
 consumidor, publicação em SharePoint, acesso a tenant, cópia de dados
 corporativos ou substituição do `core` existente.
+
+### Estado atual — outubro de 2026
+
+- o SPMIDDLE REST/domain baseline está publicado em `main` no commit `83183d6`;
+- o host CAMAP somente leitura foi validado na `Preview.aspx` sem reload ou
+  navegação interna;
+- o Explore Mais foi encerrado como candidato para o site CAMAP, pois não é um
+  módulo válido desse site;
+- a lista técnica temporária `RecursosLinks` foi removida;
+- o `mse-platform` continua sem alterações.
+
+Assim, o próximo piloto precisa de outro consumidor explicitamente válido e
+aprovado. Este documento não autoriza reativar o Explore Mais no CAMAP.
 
 O objetivo é permitir uma decisão reversível e baseada em evidências: primeiro
 provar compatibilidade em ambiente local com placeholders; depois, somente se
