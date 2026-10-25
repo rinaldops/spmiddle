@@ -108,13 +108,6 @@ O único versionamento desejado pelo usuário é via commits Git. A intenção
 operacional é manter uma única pasta/asset publicado e atualizá-lo com o mesmo
 caminho, usando refresh profundo quando necessário.
 
-**Importante:** esta preferência não pode ultrapassar instruções superiores,
-políticas efetivas da plataforma, permissões reais ou bloqueios do ambiente.
-Antes de sobrescrever um asset, verifique as regras efetivamente aplicáveis à
-sessão e o destino de produção. Não contorne controles. Se houver conflito
-entre esta preferência e uma regra superior que exija assets imutáveis, informe
-objetivamente o conflito e não finja que o overwrite foi realizado.
-
 Quando o overwrite for efetivamente permitido:
 
 1. mantenha o mesmo caminho remoto `.../preview/v8/...`;
