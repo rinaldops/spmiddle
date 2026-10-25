@@ -95,6 +95,48 @@ export async function runSharePointRestContract(factory, { report = () => {} } =
       );
     }),
 
+    test("shares concurrent digest requests and refreshes an expired digest", async () => {
+      const calls = [];
+      let now = 1000;
+      let digestNumber = 0;
+      let releaseFetch;
+      const fetchGate = new Promise((resolve) => { releaseFetch = resolve; });
+      let signalDigestStarted;
+      const digestStarted = new Promise((resolve) => { signalDigestStarted = resolve; });
+      const client = factory({
+        webUrl: "/sites/app",
+        nowImpl: () => now,
+        fetchImpl: async (url) => {
+          calls.push(url);
+          if (!url.endsWith("contextinfo")) return fakeResponse(204);
+          digestNumber += 1;
+          if (digestNumber === 1) {
+            signalDigestStarted();
+            await fetchGate;
+            return fakeResponse(200, JSON.stringify({
+              GetContextWebInformation: { FormDigestValue: "digest-1", FormDigestTimeoutSeconds: 60 }
+            }));
+          }
+          return fakeResponse(200, JSON.stringify({
+            GetContextWebInformation: { FormDigestValue: "digest-2", FormDigestTimeoutSeconds: 60 }
+          }));
+        }
+      });
+
+      const first = client.getDigest();
+      await digestStarted;
+      const second = client.getDigest();
+      releaseFetch();
+      assert.equal(await first, "digest-1");
+      assert.equal(await second, "digest-1");
+      assert.equal(calls.filter((path) => path.endsWith("contextinfo")).length, 1);
+
+      // The implementation subtracts a safety margin from the server lifetime.
+      now += 31_000;
+      assert.equal(await client.getDigest(), "digest-2");
+      assert.equal(calls.filter((path) => path.endsWith("contextinfo")).length, 2);
+    }),
+
     test("retries throttled GETs using Retry-After", async () => {
       let attempts = 0;
       const sleeps = [];
@@ -134,6 +176,37 @@ export async function runSharePointRestContract(factory, { report = () => {} } =
           && error.retryAfterMs === 1000
       );
       assert.equal(resourceCalls, 1);
+    }),
+
+    test("classifies stale ETags and extracts response ETags", async () => {
+      let calls = 0;
+      const client = factory({
+        webUrl: "/sites/app",
+        fetchImpl: async (url) => {
+          calls += 1;
+          return url.endsWith("contextinfo")
+            ? fakeResponse(200, JSON.stringify({ FormDigestValue: "digest" }))
+            : fakeResponse(412);
+        }
+      });
+
+      await assert.rejects(
+        () => client.request("/_api/web/lists(1)", { method: "MERGE", etag: '"3"', body: {} }),
+        (error) => error?.code === "concurrency-conflict"
+          && error.status === 412
+          && error.path === "/sites/app/_api/web/lists(1)"
+      );
+      assert.equal(calls, 2, "digest plus one resource request");
+
+      const etagClient = factory({
+        webUrl: "/sites/app",
+        fetchImpl: async () => fakeResponse(200, JSON.stringify({
+          Id: 1,
+          "@odata.etag": '"7"'
+        }))
+      });
+      const result = await etagClient.request("/_api/web/lists(1)");
+      assert.equal(result.etag, '"7"');
     }),
 
     test("returns binary responses", async () => {
