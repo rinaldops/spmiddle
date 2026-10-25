@@ -79,6 +79,16 @@ function itemId(id) {
   return id;
 }
 
+function paginationOptions(options) {
+  object(options, "options");
+  const { maxPages = Infinity, maxItems = Infinity } = options;
+  if ((!Number.isInteger(maxPages) && maxPages !== Infinity) || maxPages < 1
+    || (!Number.isInteger(maxItems) && maxItems !== Infinity) || maxItems < 0) {
+    throw new TypeError("maxPages deve ser positivo e maxItems não negativo.");
+  }
+  return { maxPages, maxItems };
+}
+
 /**
  * Creates a domain-oriented repository over a SharePoint list client.
  * `source` is retained as repository metadata and is deliberately not used to
@@ -104,16 +114,26 @@ export function createRepository({ source, schema, mapper, client } = {}) {
     return result(mapperValue.mapItem(response?.data ?? response), response);
   }
 
-  async function findMany(query = {}) {
+  async function findMany(query = {}, options = {}) {
     const normalized = queryOptions(query);
+    const { maxPages, maxItems } = paginationOptions(options);
     let response;
     let link;
     const items = [];
-    do {
+    const seenLinks = new Set();
+    for (let pageNumber = 0; pageNumber < maxPages && items.length < maxItems; pageNumber += 1) {
       response = await clientValue.getListItems(link ? { nextLink: link } : normalized);
-      items.push(...responseItems(response).map((item) => mapperValue.mapItem(item)));
+      const pageItems = responseItems(response).map((item) => mapperValue.mapItem(item));
+      items.push(...pageItems.slice(0, Math.max(0, maxItems - items.length)));
       link = nextLink(response);
-    } while (link);
+      if (!link) break;
+      if (seenLinks.has(link)) {
+        const error = new Error("O SharePoint retornou um cursor de paginação repetido.");
+        error.code = "pagination-loop";
+        throw error;
+      }
+      seenLinks.add(link);
+    }
     return page(items, response, normalized);
   }
 
