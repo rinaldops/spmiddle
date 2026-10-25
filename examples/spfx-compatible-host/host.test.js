@@ -97,7 +97,7 @@ try {
   const [{ path, options }] = transport.calls;
   assert.equal(options.method, "GET");
   const query = decodeURIComponent(path.slice(path.indexOf("?") + 1));
-  assert.match(query, /\$filter=Ativo eq true/);
+  assert.match(query, /\$filter=Ativo eq 1/);
   assert.match(query, /\$orderby=Categoria asc,Ordem asc,Title asc/);
 
   // The host keeps the adapter contract: active-only, fallback category, order,

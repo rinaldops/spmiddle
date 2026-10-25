@@ -69,7 +69,7 @@ try {
   const [{ path, options }] = host.transport.calls;
   assert.equal(options.method, "GET");
   const query = decodeURIComponent(path.slice(path.indexOf("?") + 1));
-  assert.match(query, /\$filter=Ativo eq true/);
+  assert.match(query, /\$filter=Ativo eq 1/);
   assert.match(query, /\$orderby=Categoria asc,Ordem asc,Title asc/);
 
   // Grouping, active-only filtering, and deterministic ordering come from the

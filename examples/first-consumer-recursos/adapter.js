@@ -84,9 +84,11 @@ function safeLink(item) {
   return link;
 }
 
-// The legacy query used `Ativo eq 1`, while the typed SPMIDDLE query uses
-// boolean true. Accept the numeric representation at the response boundary
-// only; the outgoing query remains typed and is not changed to a text filter.
+// The tenant's SharePoint REST endpoint requires the legacy numeric literal for
+// this Boolean field: `eq true` incorrectly matched the false value in the
+// production validation, while `eq 1` matched active items correctly. Keep
+// response normalization permissive because different transports can expose
+// Boolean values as true/false or 1/0.
 function isActive(value) {
   return value === true || value === 1;
 }
@@ -157,7 +159,7 @@ export function createRecursosCompatibilityService({
   async function listGroupedLinks() {
     const result = await repository.findMany({
       select,
-      filter: { field: "Ativo", operator: "eq", value: true },
+      filter: { field: "Ativo", operator: "eq", value: 1 },
       orderBy: [
         { field: "Categoria", direction: "asc" },
         { field: "Ordem", direction: "asc" },

@@ -69,7 +69,7 @@ function fakeTransport() {
 
       const query = decodeURIComponent(path.slice(path.indexOf("?") + 1));
       assert.match(query, /\$select=Id,Title,URL,Categoria,Descricao,IconeChave,Ordem,AbrirNovaJanela,Ativo/);
-      assert.match(query, /\$filter=Ativo eq true/);
+      assert.match(query, /\$filter=Ativo eq 1/);
       assert.match(query, /\$orderby=Categoria asc,Ordem asc,Title asc/);
       assert.match(query, /\$top=500/);
 

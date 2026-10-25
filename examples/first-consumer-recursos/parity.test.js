@@ -45,7 +45,7 @@ function fakeTransport(calls) {
     async request(path, options = {}) {
       calls.push({ path, options });
       const query = decodeURIComponent(path.slice(path.indexOf("?") + 1));
-      assert.match(query, /\$filter=Ativo eq true/);
+      assert.match(query, /\$filter=Ativo eq 1/);
       assert.match(query, /\$orderby=Categoria asc,Ordem asc,Title asc/);
       assert.match(query, /\$top=500/);
       return { status: 200, etag: null, data: { value: JSON.parse(JSON.stringify(records)) } };

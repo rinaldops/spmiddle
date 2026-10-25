@@ -75,7 +75,7 @@ try {
   assert.equal(path.includes("http://"), false);
   assert.equal(path.includes("https://"), false);
   const query = decodeURIComponent(path.slice(path.indexOf("?") + 1));
-  assert.match(query, /\$filter=Ativo eq true/);
+  assert.match(query, /\$filter=Ativo eq 1/);
   assert.match(query, /\$orderby=Categoria asc,Ordem asc,Title asc/);
 
   // Active filtering, category fallback, and deterministic adapter ordering.
