@@ -1,0 +1,165 @@
+﻿/* SPMIDDLE CAMAP read-only runtime: Id/Title only, bounded to 50 items. */
+(function () {
+  "use strict";
+
+  var root = document.querySelector(
+    '[data-spmiddle-mse-root][data-spmiddle-instance="preview"]'
+  );
+
+  if (!root || root.dataset.mounted === "true") {
+    return;
+  }
+
+  root.dataset.mounted = "true";
+
+  var state = { query: "", layout: "list" };
+  var metrics = {
+    rootMounts: 1,
+    fullReloads: 0,
+    internalNavigations: 0,
+    affectedRegions: [],
+    fallbacks: 0
+  };
+  var items = [];
+  var itemsRegion = root.querySelector("[data-spmiddle-items]");
+  var statusRegion = root.querySelector("[data-spmiddle-status]");
+  var metricsRegion = root.querySelector("[data-spmiddle-metrics]");
+  var queryInput = root.querySelector("#spmiddle-query");
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (character) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[character];
+    });
+  }
+
+  function renderMetrics() {
+    metricsRegion.textContent =
+      "rootMounts=" + metrics.rootMounts +
+      " fullReloads=" + metrics.fullReloads +
+      " internalNavigations=" + metrics.internalNavigations +
+      " affectedRegion=" + metrics.affectedRegions.join(",") +
+      " fallbacks=" + metrics.fallbacks;
+  }
+
+  function visibleItems() {
+    var query = state.query.toLowerCase();
+    return items.filter(function (item) {
+      return !query || item.title.toLowerCase().indexOf(query) >= 0;
+    });
+  }
+
+  function renderItems() {
+    var visible = visibleItems();
+    itemsRegion.innerHTML = visible.map(function (item) {
+      return (
+        '<article class="spmiddle-item">' +
+          "<strong>" + escapeHtml(item.title) + "</strong>" +
+          "<br><span>Registro " + escapeHtml(item.id) + "</span>" +
+        "</article>"
+      );
+    }).join("") || "<p>Nenhum registro encontrado.</p>";
+    itemsRegion.dataset.layout = state.layout;
+    itemsRegion.setAttribute("aria-busy", "false");
+  }
+
+  function updateItems(message) {
+    metrics.affectedRegions.push("items");
+    statusRegion.textContent = message;
+    renderItems();
+    renderMetrics();
+  }
+
+  function loadItems() {
+    statusRegion.textContent = "Carregando publicações...";
+    itemsRegion.setAttribute("aria-busy", "true");
+
+    var path =
+      "/_api/web/lists/getbytitle('CAMAPPublicacoes')/items" +
+      "?$select=Id,Title&$top=50";
+
+    fetch(path, {
+      method: "GET",
+      headers: { Accept: "application/json;odata=nometadata" },
+      cache: "no-store"
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+        return response.json();
+      })
+      .then(function (payload) {
+        items = (payload.value || []).map(function (item) {
+          return {
+            id: item.Id,
+            title: item.Title || "(sem título)"
+          };
+        });
+        statusRegion.textContent =
+          "Leitura concluída: " + items.length + " publicações";
+        renderItems();
+        renderMetrics();
+      })
+      .catch(function () {
+        items = [];
+        itemsRegion.innerHTML = "<p>Não foi possível carregar as publicações.</p>";
+        itemsRegion.setAttribute("aria-busy", "false");
+        statusRegion.textContent = "Erro na leitura das publicações";
+        renderMetrics();
+      });
+  }
+
+  root.querySelector('[data-spmiddle-action="query"]').addEventListener(
+    "click",
+    function () {
+      state.query = queryInput.value;
+      updateItems("Consulta interna concluída");
+    }
+  );
+
+  root.querySelector('[data-spmiddle-action="filter"]').addEventListener(
+    "click",
+    function () {
+      updateItems("Filtro interno concluído");
+    }
+  );
+
+  root.querySelector('[data-spmiddle-action="update"]').addEventListener(
+    "click",
+    function () {
+      statusRegion.textContent =
+        "Modo somente leitura: atualização não disponível";
+      renderMetrics();
+    }
+  );
+
+  root.querySelector('[data-spmiddle-action="layout"]').addEventListener(
+    "click",
+    function () {
+      state.layout = state.layout === "list" ? "compact" : "list";
+      metrics.affectedRegions.push("layout");
+      statusRegion.textContent = "Layout interno atualizado";
+      renderItems();
+      renderMetrics();
+    }
+  );
+
+  root.querySelector('[data-spmiddle-action="external"]').addEventListener(
+    "click",
+    function () {
+      metrics.fallbacks += 1;
+      statusRegion.textContent =
+        "Fallback externo registrado; nenhuma navegação automática executada";
+      renderMetrics();
+    }
+  );
+
+  renderMetrics();
+  loadItems();
+})();
