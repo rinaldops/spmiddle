@@ -84,13 +84,20 @@ function safeLink(item) {
   return link;
 }
 
+// The legacy query used `Ativo eq 1`, while the typed SPMIDDLE query uses
+// boolean true. Accept the numeric representation at the response boundary
+// only; the outgoing query remains typed and is not changed to a text filter.
+function isActive(value) {
+  return value === true || value === 1;
+}
+
 function groupLinks(items) {
   const groups = new Map();
   // Keep the legacy contract safe even when an injected test/host client does
   // not enforce the server-side filter.  The repository query remains the
   // authoritative controlled query sent to SharePoint.
   const activeItems = items
-    .filter((item) => item.Ativo === true)
+    .filter((item) => isActive(item.Ativo))
     .sort((left, right) => {
       const category = String(left.Categoria || "Outros").localeCompare(
         String(right.Categoria || "Outros"), "pt-BR"

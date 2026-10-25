@@ -103,16 +103,18 @@ local, não importa o consumidor e não executa provisioning.
 ### Diferenças que ainda exigem decisão
 
 1. O consumidor legado usa o filtro textual `Ativo eq 1`; o SPMIDDLE usa filtro
-   tipado com booleano `true`. A paridade local cobre a semântica dos dados, mas
-   ainda deve ser validado se ambos representam o mesmo comportamento no destino
-   autorizado.
+   tipado com booleano `true`. O adaptador local agora aceita `true` e `1` na
+   resposta (e rejeita `false`/`0`), mantendo a consulta enviada como booleano.
+   Isso fecha a diferença de representação no fake, mas ainda deve ser validado
+   se ambos representam o mesmo comportamento no destino autorizado.
 2. O consumidor visual aceita filtragem, busca e modos de apresentação em
    memória; isso permanece responsabilidade do host/UI, não do middleware.
 3. O consumidor possui caminhos antigos de loader e provisionamento versionado;
    não devem ser tratados como contrato do núcleo sem revisão de release.
 4. O consumidor aceita categorias fixas e também pode receber categorias
-   desconhecidas; deve ser definida a política de exibição antes de qualquer
-   migração visual.
+   desconhecidas. A política local é preservá-las como grupos distintos; somente
+   categoria vazia ou ausente usa `Outros`. A política de exibição visual ainda
+   deve ser definida antes de qualquer migração.
 5. A política de URLs do SPMIDDLE é mais explícita e restritiva; registros
    existentes devem ser auditados antes de habilitar um adaptador real.
 
