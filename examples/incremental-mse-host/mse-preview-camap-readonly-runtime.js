@@ -103,26 +103,34 @@
         state.status === "all" || item.status === state.status;
       return matchesQuery && matchesCategory && matchesStatus;
     });
-    return visible.sort(function (left, right) {
-      var leftDate = left.publicationDate
-        ? Date.parse(left.publicationDate)
-        : 0;
-      var rightDate = right.publicationDate
-        ? Date.parse(right.publicationDate)
-        : 0;
-      if (!leftDate && !rightDate) {
-        return 0;
+    return visible.map(function (item, index) {
+      return { item: item, index: index, timestamp: dateTimestamp(item.publicationDate) };
+    }).sort(function (left, right) {
+      var leftValid = left.timestamp !== null;
+      var rightValid = right.timestamp !== null;
+      if (leftValid !== rightValid) {
+        return leftValid ? -1 : 1;
       }
-      if (!leftDate) {
-        return 1;
+      if (!leftValid) {
+        return left.index - right.index;
       }
-      if (!rightDate) {
-        return -1;
+      if (left.timestamp !== right.timestamp) {
+        return state.sort === "oldest"
+          ? left.timestamp - right.timestamp
+          : right.timestamp - left.timestamp;
       }
-      return state.sort === "oldest"
-        ? leftDate - rightDate
-        : rightDate - leftDate;
+      return left.index - right.index;
+    }).map(function (entry) {
+      return entry.item;
     });
+  }
+
+  function dateTimestamp(value) {
+    if (!value) {
+      return null;
+    }
+    var timestamp = Date.parse(value);
+    return Number.isFinite(timestamp) ? timestamp : null;
   }
 
   function renderItems() {
