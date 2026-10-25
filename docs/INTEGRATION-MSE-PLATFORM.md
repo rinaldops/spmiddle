@@ -110,9 +110,11 @@ quebra intencional ou bloqueio.
 - comparar saída normalizada, erros e chamadas REST esperadas;
 - adicionar testes de contrato e regressão antes de qualquer uso real.
 
-O primeiro candidato conceitual é o contrato de leitura do Explore Mais, já
-validado localmente pelo adaptador `first-consumer-recursos`. Isso não constitui
-autorização para migrar o módulo real.
+O contrato de leitura do Explore Mais foi o primeiro candidato conceitual e está
+validado localmente pelo adaptador `first-consumer-recursos`, mas foi encerrado
+como candidato do site CAMAP. Isso não constitui autorização para migrar o
+módulo real nem autoriza sua reativação nesse site. Um novo piloto exige outro
+consumidor explicitamente válido.
 
 ### Fase 4 — Piloto controlado
 

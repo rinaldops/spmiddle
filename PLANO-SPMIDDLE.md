@@ -1,9 +1,21 @@
 # SPMIDDLE — Plano de desenvolvimento
 
-**Status:** diretriz inicial do projeto  
+**Status:** diretriz inicial; fundação técnica concluída e baseline CAMAP validado
 **Escopo desta versão:** middleware JavaScript client-side para acesso estruturado a dados do SharePoint  
-**Primeiro consumidor de referência:** `web-devs/mse-platform`  
+**Consumidor de referência para análise:** `web-devs/mse-platform`  
 **Local do projeto:** `web-devs/SPMIDDLE`
+
+### Estado atual do planejamento — outubro de 2026
+
+- a fundação REST/domínio, repositories, schemas, provisioning, segurança e
+  paginação está implementada e coberta pela suíte local;
+- o host CAMAP somente leitura foi validado na `Preview.aspx`, sem reload ou
+  navegação interna;
+- o Explore Mais foi encerrado como candidato do site CAMAP e não deve ser
+  reativado nesse destino;
+- nenhum código ou contrato do `mse-platform` foi alterado;
+- a próxima migração funcional depende da identificação e aprovação de outro
+  consumidor válido.
 
 ---
 
@@ -255,8 +267,10 @@ para mudanças externas ou de contexto. Os critérios completos estão em
 
 ## 7. Relação com o `mse-platform`
 
-O `mse-platform` será o primeiro consumidor de referência, não a definição do
-produto.
+O `mse-platform` permanece consumidor de referência para análise de contratos,
+não a definição do produto nem um consumidor autorizado para migração. O
+Explore Mais foi analisado como spike e encerrado para o site CAMAP; um novo
+piloto exige consumidor e destino explicitamente aprovados.
 
 ### 7.1 Conhecimentos e componentes a reutilizar
 

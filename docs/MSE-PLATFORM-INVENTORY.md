@@ -93,12 +93,11 @@ Resultado atual: a projeção local é equivalente para esse fluxo controlado. A
 consulta enviada pelo SPMIDDLE é verificada separadamente e permanece tipada,
 allowlisted e limitada.
 
-O próximo gate é a paridade declarativa do schema. Ela deve comparar versão,
-identidade da lista, campos obrigatórios, defaults e índices sem executar
-provisionamento. A diferença conhecida é intencional: o schema legado descreve
-`URL` como texto, enquanto o SPMIDDLE usa o tipo `URL` para aplicar validação
-mais explícita. Isso precisa ser confirmado como compatível antes de qualquer
-uso real.
+O gate de paridade declarativa foi executado no spike local e confirmado na
+estrutura temporária de teste antes da remoção da lista. A diferença conhecida
+é intencional: o schema legado descreve `URL` como texto, enquanto o SPMIDDLE
+usa o tipo `URL` para aplicar validação mais explícita. Essa evidência não abre
+um piloto, pois o Explore Mais foi encerrado para o site CAMAP.
 
 `examples/first-consumer-recursos/schema-parity.test.js` também registra as
 diferenças de representação de `URL`, `Categoria` e `Descricao` como exceções
@@ -170,7 +169,7 @@ Para um novo consumidor, antes de qualquer alteração no `mse-platform` ou aces
 externo, ainda faltam:
 
 1. identificar e aprovar um fluxo e consumidor que sejam válidos para o destino;
-2. fechar a matriz de equivalência do Explore Mais;
+2. fechar a matriz de equivalência do novo consumidor escolhido;
 3. revisar proveniência/licença de qualquer código candidato;
 4. definir permissões, observabilidade e rollback;
 5. manter o caminho legado selecionável;
