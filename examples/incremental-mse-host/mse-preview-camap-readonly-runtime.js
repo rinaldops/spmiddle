@@ -1,4 +1,4 @@
-/* SPMIDDLE CAMAP read-only runtime: Id/Title/Category, bounded to 50 items. */
+/* SPMIDDLE CAMAP read-only runtime: Id/Title/Category/Status, bounded to 50 items. */
 (function () {
   "use strict";
 
@@ -12,7 +12,7 @@
 
   root.dataset.mounted = "true";
 
-  var state = { query: "", category: "all", layout: "list" };
+  var state = { query: "", category: "all", status: "all", layout: "list" };
   var metrics = {
     rootMounts: 1,
     fullReloads: 0,
@@ -26,6 +26,19 @@
   var metricsRegion = root.querySelector("[data-spmiddle-metrics]");
   var queryInput = root.querySelector("#spmiddle-query");
   var filterSelect = root.querySelector("#spmiddle-filter");
+  var statusSelect;
+
+  function ensureStatusSelect() {
+    statusSelect = root.querySelector("#spmiddle-status-filter");
+    if (statusSelect) {
+      return;
+    }
+    statusSelect = document.createElement("select");
+    statusSelect.id = "spmiddle-status-filter";
+    statusSelect.setAttribute("aria-label", "Filtro por estado editorial");
+    statusSelect.innerHTML = '<option value="all">Todos os estados</option>';
+    filterSelect.parentNode.insertBefore(statusSelect, filterSelect.nextSibling);
+  }
 
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, function (character) {
@@ -55,7 +68,9 @@
         !query || item.title.toLowerCase().indexOf(query) >= 0;
       var matchesCategory =
         state.category === "all" || item.category === state.category;
-      return matchesQuery && matchesCategory;
+      var matchesStatus =
+        state.status === "all" || item.status === state.status;
+      return matchesQuery && matchesCategory && matchesStatus;
     });
   }
 
@@ -66,6 +81,7 @@
         '<article class="spmiddle-item">' +
           "<strong>" + escapeHtml(item.title) + "</strong>" +
           "<br><span>Categoria: " + escapeHtml(item.category || "(sem categoria)") +
+          "</span><br><span>Estado: " + escapeHtml(item.status || "(sem estado)") +
           "</span><br><span>Registro " + escapeHtml(item.id) + "</span>" +
         "</article>"
       );
@@ -91,6 +107,23 @@
       }).join("");
     filterSelect.value = categories.indexOf(selected) >= 0 ? selected : "all";
     state.category = filterSelect.value;
+
+    var statuses = items
+      .map(function (item) { return item.status; })
+      .filter(function (status, index, values) {
+        return status && values.indexOf(status) === index;
+      })
+      .sort(function (left, right) {
+        return left.localeCompare(right, "pt-BR");
+      });
+    var selectedStatus = state.status;
+    statusSelect.innerHTML = '<option value="all">Todos os estados</option>' +
+      statuses.map(function (status) {
+        return '<option value="' + escapeHtml(status) + '">' +
+          escapeHtml(status) + '</option>';
+      }).join("");
+    statusSelect.value = statuses.indexOf(selectedStatus) >= 0 ? selectedStatus : "all";
+    state.status = statusSelect.value;
   }
 
   function updateItems(message) {
@@ -106,7 +139,7 @@
 
     var path =
       "/teams/camap-agp/_api/web/lists/getbytitle('MSE Publicacoes')/items" +
-      "?$select=Id,Title,CategoriaTexto&$top=50";
+      "?$select=Id,Title,CategoriaTexto,EstadoEditorial&$top=50";
 
     fetch(path, {
       method: "GET",
@@ -124,7 +157,8 @@
           return {
             id: item.Id,
             title: item.Title || "(sem título)",
-            category: item.CategoriaTexto || ""
+            category: item.CategoriaTexto || "",
+            status: item.EstadoEditorial || ""
           };
         });
         renderFilterOptions();
@@ -154,7 +188,8 @@
     "click",
     function () {
       state.category = root.querySelector("#spmiddle-filter").value;
-      updateItems("Filtro por categoria concluído");
+      state.status = statusSelect.value;
+      updateItems("Filtros por categoria e estado concluídos");
     }
   );
 
@@ -188,6 +223,7 @@
     }
   );
 
+  ensureStatusSelect();
   renderMetrics();
   loadItems();
 })();
