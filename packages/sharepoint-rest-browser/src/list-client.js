@@ -3,6 +3,9 @@
  * are authenticated: that remains the responsibility of the REST transport.
  */
 
+const DEFAULT_MAX_PAGES = 100;
+const DEFAULT_MAX_ITEMS = 10000;
+
 function text(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new TypeError(`${name} deve ser um texto não vazio.`);
   return value.trim();
@@ -126,8 +129,8 @@ export function createSharePointListClient({ transport, listId, listPath } = {})
     return transport.request(itemPath(id), { method: "DELETE", etag: options.etag, allowWildcardEtag: options.allowWildcardEtag });
   }
 
-  async function getAllPages(query = {}, { maxPages = Infinity, maxItems = Infinity } = {}) {
-    if (!Number.isInteger(maxPages) || maxPages < 1 || (!Number.isFinite(maxItems) && maxItems !== Infinity) || maxItems < 0) {
+  async function getAllPages(query = {}, { maxPages = DEFAULT_MAX_PAGES, maxItems = DEFAULT_MAX_ITEMS } = {}) {
+    if (!Number.isInteger(maxPages) || maxPages < 1 || !Number.isInteger(maxItems) || maxItems < 0) {
       throw new TypeError("maxPages deve ser positivo e maxItems não negativo.");
     }
     const items = [];

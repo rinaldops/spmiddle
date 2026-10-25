@@ -139,6 +139,24 @@ test("findMany detects repeated cursors and supports explicit page limits", asyn
   await assert.rejects(() => limitedRepository.findMany({}, { maxPages: 0 }), /maxPages/i);
 });
 
+test("findMany uses bounded pagination defaults", async () => {
+  let calls = 0;
+  const client = {
+    getListItems: async () => {
+      calls += 1;
+      return { data: { value: [], "@odata.nextLink": `/next-${calls}` } };
+    },
+    getListItem: async () => ({ data: {} }),
+    createListItem: async () => ({ data: {} }),
+    updateListItem: async () => ({ data: {} }),
+    deleteListItem: async () => ({})
+  };
+  const repository = createRepository({ source: "tasks", client, mapper: createMapper({ mapping }) });
+  const result = await repository.findMany({}, {});
+  assert.equal(calls, 100);
+  assert.equal(result.hasNextPage, true);
+});
+
 test("count returns the number of matching items", async () => {
   const client = makeClient([{ data: { value: [{ Id: 1 }, { Id: 2 }], "@odata.count": 2 }, status: 200 }]);
   const repository = createRepository({ source: "articles", mapper: createMapper({ mapping }), client });
