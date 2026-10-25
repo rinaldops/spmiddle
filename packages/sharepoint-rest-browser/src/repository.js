@@ -1,6 +1,9 @@
 import { createMapper } from "./mapper.js";
 import { normalizeQuery } from "./query.js";
 
+const DEFAULT_MAX_PAGES = 100;
+const DEFAULT_MAX_ITEMS = 10000;
+
 function object(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new TypeError(`${name} deve ser um objeto.`);
@@ -81,9 +84,9 @@ function itemId(id) {
 
 function paginationOptions(options) {
   object(options, "options");
-  const { maxPages = Infinity, maxItems = Infinity } = options;
-  if ((!Number.isInteger(maxPages) && maxPages !== Infinity) || maxPages < 1
-    || (!Number.isInteger(maxItems) && maxItems !== Infinity) || maxItems < 0) {
+  const { maxPages = DEFAULT_MAX_PAGES, maxItems = DEFAULT_MAX_ITEMS } = options;
+  if (!Number.isInteger(maxPages) || maxPages < 1
+    || !Number.isInteger(maxItems) || maxItems < 0) {
     throw new TypeError("maxPages deve ser positivo e maxItems não negativo.");
   }
   return { maxPages, maxItems };
@@ -151,11 +154,19 @@ export function createRepository({ source, schema, mapper, client } = {}) {
     const items = [];
     let response;
     let link;
-    do {
+    const seenLinks = new Set();
+    for (let pageNumber = 0; pageNumber < DEFAULT_MAX_PAGES && items.length < DEFAULT_MAX_ITEMS; pageNumber += 1) {
       response = await clientValue.getListItems(link ? { nextLink: link } : normalized);
-      items.push(...responseItems(response));
+      items.push(...responseItems(response).slice(0, DEFAULT_MAX_ITEMS - items.length));
       link = nextLink(response);
-    } while (link);
+      if (!link) break;
+      if (seenLinks.has(link)) {
+        const error = new Error("O SharePoint retornou um cursor de paginação repetido.");
+        error.code = "pagination-loop";
+        throw error;
+      }
+      seenLinks.add(link);
+    }
     return { ...response, data: { ...(response?.data ?? {}), value: items } };
   }
 
