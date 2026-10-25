@@ -118,6 +118,27 @@ test("findMany controls the query, maps pages, and returns cursor metadata", asy
   assert.equal(client.calls[1].query.nextLink, next);
 });
 
+test("findMany detects repeated cursors and supports explicit page limits", async () => {
+  const repeated = "/sites/demo/_api/web/lists(1)/items?$skiptoken=repeat";
+  const loopClient = makeClient([
+    { data: { value: [{ Id: 1, Title: "One" }], "@odata.nextLink": repeated }, status: 200 },
+    { data: { value: [{ Id: 2, Title: "Two" }], "@odata.nextLink": repeated }, status: 200 }
+  ]);
+  const loopRepository = createRepository({ source: "articles", mapper: createMapper({ mapping }), client: loopClient });
+  await assert.rejects(() => loopRepository.findMany({}, { maxPages: 10 }), (error) => error.code === "pagination-loop");
+
+  const limitedClient = makeClient([
+    { data: { value: [{ Id: 1, Title: "One" }], "@odata.nextLink": "/next" }, status: 200 },
+    { data: { value: [{ Id: 2, Title: "Two" }], "@odata.nextLink": "/last" }, status: 200 }
+  ]);
+  const limitedRepository = createRepository({ source: "articles", mapper: createMapper({ mapping }), client: limitedClient });
+  const result = await limitedRepository.findMany({}, { maxPages: 1, maxItems: 1 });
+  assert.deepEqual(result.items, [{ id: 1, title: "One" }]);
+  assert.equal(limitedClient.calls.length, 1);
+  assert.equal(result.hasNextPage, true);
+  await assert.rejects(() => limitedRepository.findMany({}, { maxPages: 0 }), /maxPages/i);
+});
+
 test("count returns the number of matching items", async () => {
   const client = makeClient([{ data: { value: [{ Id: 1 }, { Id: 2 }], "@odata.count": 2 }, status: 200 }]);
   const repository = createRepository({ source: "articles", mapper: createMapper({ mapping }), client });
