@@ -5,7 +5,7 @@ export const CATEGORIES_LIST_NAME = validateJoomlaListName("mseCategories");
 export const MSE_CATEGORIES_SCHEMA = defineListSchema({
   key: "mse-categories",
   internalName: CATEGORIES_LIST_NAME,
-  displayName: "MSE Categories",
+  displayName: CATEGORIES_LIST_NAME,
   template: 100,
   schemaVersion: 1,
   fields: [
