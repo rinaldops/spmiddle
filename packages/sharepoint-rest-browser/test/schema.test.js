@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { defineListSchema, validateListSchema } from "../src/schema.js";
+import { defineListSchema, validateListSchema, validateJoomlaListName } from "../src/schema.js";
 
 const tests = [];
 function test(name, fn) { tests.push({ name, fn }); }
@@ -114,6 +114,14 @@ test("defining a schema performs no network request", () => {
     assert.equal(calls, 0);
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+test("validates Joomla-like list names before provisioning", () => {
+  assert.equal(validateJoomlaListName("mseContent"), "mseContent");
+  assert.equal(validateJoomlaListName("mseContentitemTagMap"), "mseContentitemTagMap");
+  for (const invalid of ["MSEContent", "mse_content", "mse conteúdo", "mse", "MSE Publicacoes"]) {
+    assert.throws(() => validateJoomlaListName(invalid), /nome da lista Joomla/);
   }
 });
 

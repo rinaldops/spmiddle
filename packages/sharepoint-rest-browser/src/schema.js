@@ -24,6 +24,14 @@ const BASIC_TYPES = new Map([
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const KEY = /^[A-Za-z][A-Za-z0-9._-]*$/;
+const JOOMLA_LIST_NAME = /^mse[A-Z][A-Za-z0-9]*$/;
+
+export function validateJoomlaListName(value) {
+  if (typeof value !== "string" || !JOOMLA_LIST_NAME.test(value.trim())) {
+    throw new TypeError("O nome da lista Joomla deve começar por mse e usar apenas PascalCase ASCII.");
+  }
+  return value.trim();
+}
 
 function plainObject(value, name) {
   if (value === null || typeof value !== "object" || Array.isArray(value)
