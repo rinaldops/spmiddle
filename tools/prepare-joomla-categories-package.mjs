@@ -30,6 +30,14 @@ const manifest = {
     visibleStatus: "Leitura concluída: 0 categorias",
     stablePathSwitch: "verified"
   },
+  acceptance: {
+    status: "passed-read-only-remote",
+    publishedVisible: true,
+    unpublishedHidden: true,
+    trashedHidden: true,
+    temporaryItemRemoved: true,
+    finalVisibleCategoryCount: 0
+  },
   inspect: {
     status: "list-exists",
     list: "mseCategories",

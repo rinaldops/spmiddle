@@ -90,6 +90,21 @@ O resultado `0 categorias` é esperado porque a lista não contém itens. Não f
 usado `browser.evaluate` para injetar JavaScript e não foi feita nova escrita
 na lista.
 
+## Aceitação remota
+
+O teste controlado foi executado com um item temporário pela interface moderna
+do SharePoint e concluído com a remoção do item:
+
+| Estado | Resultado na `Preview.aspx` |
+| --- | --- |
+| `Published` | item visível; `Leitura concluída: 1 categorias` |
+| `Unpublished` | item oculto; `Leitura concluída: 0 categorias` |
+| `Trashed` | item oculto; `Leitura concluída: 0 categorias` |
+| após limpeza | lista vazia; `Leitura concluída: 0 categorias` |
+
+O teste confirmou que o runtime consulta somente categorias publicadas. O item
+temporário foi removido pela interface SharePoint; não há item de teste ativo.
+
 Como a conexão foi feita no MSE existente, o rollback é operacional e mínimo:
 
 1. editar novamente a mesma webpart MSE;
