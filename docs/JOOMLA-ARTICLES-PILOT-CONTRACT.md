@@ -1,0 +1,72 @@
+# Contrato do piloto de artigos — `mod_articles_latest`
+
+**Status:** contrato local definido; nenhuma lista, página ou asset foi alterado
+**Lista candidata:** `mseContent`
+**Operação:** somente leitura
+
+## Escopo aprovado para a implementação local
+
+O primeiro contrato SPMIDDLE cobre apenas o conjunto mínimo necessário para
+listar artigos recentes publicados:
+
+- uma categoria opcional por instância;
+- estado `Published`;
+- janela opcional de publicação (`PublishStart`/`PublishEnd`);
+- ordenação por `Created` decrescente;
+- quantidade limitada por `count`, padrão 5;
+- leitura somente dos campos contratados.
+
+O contrato não declara paridade total com o XML Joomla. Ficam fora desta etapa
+categorias múltiplas, filtros por autor, ordenação aleatória/modificada/publicada,
+layouts alternativos, sufixos CSS e cache do módulo.
+
+## Schema candidato
+
+| Campo | Tipo | Obrigatório | Uso |
+| --- | --- | --- | --- |
+| `Title` | Text | sim | título do artigo |
+| `Alias` | Text | sim | alias estável |
+| `EditorialState` | Choice | sim | `Published`, `Unpublished`, `Archived`, `Trashed` |
+| `Featured` | Boolean | não | filtro de destaque futuro |
+| `PublishStart` | DateTime | não | início da vigência |
+| `PublishEnd` | DateTime | não | fim da vigência |
+| `Category` | Text | não | categoria única por instância |
+
+`Id` e `Created` são campos nativos somente leitura do SharePoint. O adapter
+seleciona esses dois campos junto aos campos do schema, mas não os provisiona
+como campos customizados.
+
+## Regra de visibilidade
+
+Um item é elegível quando:
+
+```text
+EditorialState = Published
+AND (PublishStart IS NULL OR PublishStart <= now)
+AND (PublishEnd IS NULL OR PublishEnd >= now)
+AND (Category = category, quando a instância informar category)
+```
+
+O resultado é ordenado por `Created desc` e limitado antes de ser entregue ao
+consumidor.
+
+## Segurança e rollback
+
+- `mseContent` é apenas um nome de contrato local; não foi criada a lista.
+- O adapter usa allowlist de campos e lista.
+- O cliente de teste rejeita create, update e delete.
+- Nenhum runtime ou asset foi publicado.
+- Antes de provisioning será necessário executar `inspect`, revisar permissões,
+  confirmar o subsite de produção e preparar rollback do schema.
+
+## Critérios de aceite local
+
+Os testes devem comprovar:
+
+1. schema `mseContent` válido e versionado;
+2. estados não publicados excluídos;
+3. datas fora da janela excluídas;
+4. categoria opcional e limite aplicados;
+5. ordenação `Created desc`;
+6. seleção somente dos campos contratados;
+7. nenhuma operação de escrita pelo piloto.
