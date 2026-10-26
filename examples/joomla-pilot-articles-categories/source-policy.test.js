@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createDataSourceRegistry } from "../../packages/sharepoint-rest-browser/src/data-sources.js";
 import { createMseCategoriesSourceRegistry, MSE_DATA_WEB_URL, MSE_CATEGORIES_SOURCE_KEY } from "./source-policy.js";
 
 const transports = [];
@@ -18,4 +19,9 @@ assert.deepEqual(registry.get(MSE_CATEGORIES_SOURCE_KEY), {
 assert.equal(registry.get("other-source"), undefined);
 assert.equal(registry.getTransport(MSE_CATEGORIES_SOURCE_KEY).constructor, Object);
 assert.deepEqual(transports, [MSE_DATA_WEB_URL]);
+assert.throws(() => createDataSourceRegistry({
+  allowedWebUrls: [MSE_DATA_WEB_URL],
+  transportFactory: () => ({ async request() {} }),
+  sources: [{ key: "unexpected", webUrl: "/teams/other/db", listPath: "lists/mseCategories" }]
+}), /allowedWebUrls/);
 console.log("ok - source policy exposes only the approved /db origin");
