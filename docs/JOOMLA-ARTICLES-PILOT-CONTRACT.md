@@ -83,6 +83,31 @@ subsite e qualquer `apply` permanecem etapas administrativas separadas, sujeitas
 à confirmação do destino de produção, permissões, fingerprint do plano e
 rollback.
 
+## Inspeção remota
+
+Em 26/10/2026, o `inspect` foi executado no destino autorizado
+`/teams/camap-agp/db`, usando a sessão corporativa do FIORI-AUTO e somente
+requisições GET. O SharePoint respondeu que a lista não existe:
+
+```text
+List 'mseContent' does not exist at site with URL
+'https://petrobrasbr.sharepoint.com/teams/camap-agp/db'.
+```
+
+O mesmo resultado foi confirmado no endpoint de campos. Resultado operacional:
+
+```text
+status: missing
+list: mseContent
+writes: 0
+apply: not-run
+```
+
+Essa evidência apenas confirma que o alvo está ausente e que o plano de criação
+pode ser revisado. Não constitui autorização para criar a lista. O provisioning
+continua bloqueado até a revisão administrativa do schema, permissões, índices,
+fingerprint do plano e rollback.
+
 ## Critérios de aceite local
 
 Os testes devem comprovar:
