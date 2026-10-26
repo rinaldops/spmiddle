@@ -23,7 +23,7 @@ function fieldPath(title = schema.displayName) {
   return `${listPath(title)}/fields`;
 }
 
-function fakeTransport({ list = null, fields = [] } = {}) {
+function fakeTransport({ list = null, fields = [], schemaForPaths = schema } = {}) {
   const state = { list, fields: fields.map((field) => ({ ...field })) };
   const calls = [];
   const transport = {
@@ -34,10 +34,12 @@ function fakeTransport({ list = null, fields = [] } = {}) {
       calls.push({ path, options });
       const method = (options.method ?? "GET").toUpperCase();
 
-      if (method === "GET" && path.startsWith(fieldPath())) {
+      const currentListPath = `${site}/_api/web/lists/getbytitle('${schemaForPaths.displayName}')`;
+      const currentFieldPath = `${currentListPath}/fields`;
+      if (method === "GET" && path.startsWith(currentFieldPath)) {
         return { data: { value: state.fields }, status: 200 };
       }
-      if (method === "GET" && (path === listPath() || path.startsWith(`${listPath()}?$select=`))) {
+      if (method === "GET" && (path === currentListPath || path.startsWith(`${currentListPath}?$select=`))) {
         if (!state.list) {
           const error = new Error("not found");
           error.code = "not-found";
@@ -61,15 +63,19 @@ function fakeTransport({ list = null, fields = [] } = {}) {
         };
         return { data: state.list, status: 201 };
       }
-      if (method === "POST" && path === fieldPath()) {
-        const body = options.body ?? {};
+      if (method === "POST" && path === `${currentFieldPath}/createfieldasxml`) {
+        const body = options.body?.parameters ?? {};
+        const schemaXml = body.SchemaXml ?? "";
+        const internalName = schemaXml.match(/Name="([^"]+)"/)?.[1];
+        const title = schemaXml.match(/DisplayName="([^"]+)"/)?.[1];
+        const type = schemaXml.match(/Type="([^"]+)"/)?.[1];
         const field = {
-          InternalName: body.InternalName ?? body.Name,
-          Title: body.Title ?? body.DisplayName ?? body.InternalName ?? body.Name,
-          TypeAsString: body.TypeAsString ?? body.Type ?? ({ 2: "Text", 3: "MultilineText", 4: "DateTime", 6: "Choice", 7: "Lookup", 8: "Boolean", 9: "Number", 10: "Currency", 11: "URL", 20: "User" }[body.FieldTypeKind] ?? "Text"),
-          Required: body.Required === true
+          InternalName: internalName,
+          Title: title,
+          TypeAsString: type,
+          Required: /Required="TRUE"/.test(schemaXml)
         };
-        if (body.Choices) field.Choices = body.Choices.results ?? body.Choices;
+        field.Choices = [...schemaXml.matchAll(/<CHOICE>([^<]*)<\/CHOICE>/g)].map((match) => match[1]);
         state.fields.push(field);
         return { data: field, status: 201 };
       }
@@ -132,7 +138,7 @@ await run("apply creates the list and fields through SharePoint REST requests", 
 
   const writes = transport.calls.filter(({ options }) => (options.method ?? "GET").toUpperCase() !== "GET");
   assert.ok(writes.some(({ path }) => path === `${site}/_api/web/lists`));
-  assert.ok(writes.some(({ path }) => path === fieldPath()));
+   assert.ok(writes.some(({ path }) => path === `${fieldPath()}/createfieldasxml`));
   assert.equal(transport.state.list.Title, schema.displayName);
   assert.deepEqual(
     transport.state.fields.map((field) => field.InternalName).sort(),
@@ -142,6 +148,30 @@ await run("apply creates the list and fields through SharePoint REST requests", 
   const listCreate = writes.find(({ path }) => path === `${site}/_api/web/lists`);
   assert.equal(listCreate.options.body.Title, schema.displayName);
   assert.equal(listCreate.options.body.BaseTemplate ?? listCreate.options.body.TemplateType, schema.template);
+   const fieldCreate = writes.find(({ path }) => path === `${fieldPath()}/createfieldasxml`);
+   assert.match(fieldCreate.options.body.parameters.SchemaXml, /Type="Text"/);
+   assert.match(fieldCreate.options.body.parameters.SchemaXml, /Name="Title"/);
+   assert.equal(fieldCreate.options.body.parameters.Options, 0);
+});
+
+await run("creates typed fields with escaped XML and choice values", async () => {
+  const typedSchema = defineListSchema({
+    key: "typed", internalName: "Typed", displayName: "Typed", template: 100, schemaVersion: 1,
+    fields: [
+      { internalName: "State", displayName: "State & status", type: "Choice", choices: ["Published", "R&D"] },
+      { internalName: "Enabled", displayName: "Enabled", type: "Boolean", defaultValue: false },
+      { internalName: "When", displayName: "When", type: "DateTime" }
+    ]
+  });
+  const transport = fakeTransport({ schemaForPaths: typedSchema });
+  const manager = createProvisioningManager({ transport, schema: typedSchema });
+  const plan = await manager.inspect();
+  const fields = plan.actions.filter((action) => action.type === "create-field");
+  assert.equal(fields.length, 3);
+  assert.match(fields[0].body.parameters.SchemaXml, /State &amp; status/);
+  assert.match(fields[0].body.parameters.SchemaXml, /<CHOICE>R&amp;D<\/CHOICE>/);
+  assert.match(fields[1].body.parameters.SchemaXml, /Type="Boolean"/);
+  assert.match(fields[2].body.parameters.SchemaXml, /Type="DateTime"/);
 });
 
 await run("verify confirms a compatible provision", async () => {

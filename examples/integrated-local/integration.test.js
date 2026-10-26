@@ -64,8 +64,13 @@ function memoryTransport() {
         state.list = { Id: "list-1", Title: body.Title, BaseTemplate: body.BaseTemplate };
         return result(state.list, 201);
       }
-      if (method === "POST" && path === `${listRoot}/fields`) {
-        const field = { InternalName: body.InternalName, TypeAsString: "Text", Required: body.Required === true };
+      if (method === "POST" && path === `${listRoot}/fields/createfieldasxml`) {
+        const schemaXml = body.parameters?.SchemaXml ?? "";
+        const field = {
+          InternalName: schemaXml.match(/Name="([^"]+)"/)?.[1],
+          TypeAsString: schemaXml.match(/Type="([^"]+)"/)?.[1] ?? "Text",
+          Required: /Required="TRUE"/.test(schemaXml)
+        };
         state.fields.push(field);
         return result(field, 201);
       }

@@ -36,6 +36,32 @@ function fieldName(field) {
   return field.InternalName || field.StaticName || field.internalName || field.Name;
 }
 
+function xml(value) {
+  return String(value).replace(/[&<>'\"]/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&apos;", "\"": "&quot;"
+  }[character]));
+}
+
+function fieldXml(field) {
+  const type = field.type === "MultilineText" ? "Note" : field.type;
+  const attributes = [
+    ["Type", type],
+    ["Name", field.internalName],
+    ["StaticName", field.internalName],
+    ["DisplayName", field.displayName || field.internalName],
+    ["Required", field.required === true ? "TRUE" : "FALSE"]
+  ];
+  if (field.type === "Choice") {
+    attributes.push(["Format", "Dropdown"], ["FillInChoice", "FALSE"]);
+  }
+  if (field.defaultValue !== undefined) attributes.push(["Default", field.defaultValue]);
+  const head = attributes.map(([name, value]) => `${name}="${xml(value)}"`).join(" ");
+  const choices = field.type === "Choice"
+    ? `<CHOICES>${field.choices.map((choice) => `<CHOICE>${xml(choice)}</CHOICE>`).join("")}</CHOICES>`
+    : "";
+  return `<Field ${head}>${choices}</Field>`;
+}
+
 function sameIndex(index, expected) {
   const fields = index.fields || index.Fields || index.FieldNames || index.FieldName;
   const actual = Array.isArray(fields) ? fields : fields ? [fields] : [];
@@ -45,18 +71,15 @@ function sameIndex(index, expected) {
 }
 
 function missingFieldAction(root, field) {
-  const typeName = Object.keys(FIELD_TYPES).find((name) => name.toLowerCase() === String(field.type).toLowerCase());
   const body = {
-    __metadata: { type: "SP.Field" },
-    Title: field.displayName || field.internalName,
-    InternalName: field.internalName,
-    FieldTypeKind: FIELD_TYPES[field.type] ?? FIELD_TYPES[typeName] ?? field.type,
-    Required: field.required === true
+    parameters: {
+      SchemaXml: fieldXml(field),
+      Options: 0
+    }
   };
-  if (field.type === "Choice" && field.choices) body.Choices = { results: field.choices };
   return {
     kind: "field", type: "create-field", target: field.internalName,
-    method: "POST", path: `${root}/fields`, body
+    method: "POST", path: `${root}/fields/createfieldasxml`, body
   };
 }
 

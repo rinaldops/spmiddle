@@ -1,6 +1,6 @@
 # Contrato do piloto de artigos — `mod_articles_latest`
 
-**Status:** contrato local definido; nenhuma lista, página ou asset foi alterado
+**Status:** lista-base criada; provisioning REST parcial interrompido; nenhum registro, página ou asset foi alterado
 **Lista candidata:** `mseContent`
 **Operação:** somente leitura
 
@@ -52,7 +52,10 @@ consumidor.
 
 ## Segurança e rollback
 
-- `mseContent` é apenas um nome de contrato local; não foi criada a lista.
+- `mseContent` foi criada como lista vazia pela UI nesta sessão, apenas como
+  intervenção pontual; a UI não é o fluxo operacional consolidado do SPMIDDLE.
+- O fluxo canônico de criação/alteração/exclusão é o cliente REST do SPMIDDLE,
+  com `inspect → plan → confirmação explícita → apply → verify`.
 - O adapter usa allowlist de campos e lista.
 - O cliente de teste rejeita create, update e delete.
 - Nenhum runtime ou asset foi publicado.
@@ -148,10 +151,12 @@ aplicação parcial, a operação deve ser interrompida; não se deve repetir o 
 O relatório deixa o plano **pronto para confirmação explícita**, mas não concede
 essa confirmação e não executa `apply`.
 
-## Bloqueio operacional da criação
+## Histórico da criação da lista e fluxo canônico
 
-As rotas administrativas nativas foram verificadas pela sessão autorizada do
-FIORI-AUTO, sem escrita:
+Antes da correção do procedimento, as rotas administrativas nativas foram
+verificadas pela sessão autorizada do FIORI-AUTO. A opção `New > List` foi então
+identificada e usada uma única vez para criar a lista-base vazia. Esse passo é
+histórico e não deve ser consolidado como procedimento de provisioning:
 
 - `SiteContents.aspx`: erro genérico do SharePoint;
 - `viewlsts.aspx`: redirecionamento para a Home;
@@ -163,11 +168,43 @@ Os detalhes técnicos exibidos pelo SharePoint informaram apenas “An unexpecte
 error has occurred”, sem uma causa funcional ou permissão específica. O
 identificador de correlação não foi registrado no repositório.
 
-Conclusão operacional: o plano permanece aprovado somente para revisão, porém a
-criação está bloqueada pela disponibilidade da UI administrativa. O próximo
-passo externo é o administrador do site investigar/restaurar a criação nativa
-de listas no subsite `/teams/camap-agp/db`. Até essa correção, não usar REST de
-escrita, JavaScript injetado ou outro canal alternativo para contornar a UI.
+O fluxo operacional passa a ser exclusivamente REST pelo SPMIDDLE. A UI pode
+ser usada apenas para diagnóstico visual ou recuperação administrativa, nunca
+como etapa necessária do processo de dados.
+
+### Estado REST após a criação-base e tentativa parcial
+
+Uma leitura autenticada confirmou:
+
+```text
+lista: mseContent
+ItemCount: 0
+campos criados: Alias, Publish start, Publish end, Category
+campos ausentes: EditorialState, Featured
+/indexes: indisponível (HTTP 404)
+```
+
+A primeira tentativa REST de criar os seis campos ausentes foi rejeitada pelo
+tenant com HTTP 400 porque o payload genérico incluía `__metadata` para
+`SP.Field`. O adaptador foi corrigido para omitir essa propriedade no POST de
+campos. A segunda tentativa criou quatro campos, mas confirmou duas limitações
+adicionais do endpoint genérico: Choice exige uma operação/payload tipado e
+Boolean não aceitou o valor JSON usado. Para os campos de data, o tenant derivou
+os internal names `Publish_x0020_start` e `Publish_x0020_end` a partir do título,
+em vez de respeitar os nomes contratuais.
+
+O provisioning foi interrompido antes de nova escrita. A compensação, se
+necessária, deve ser feita somente por REST e com autorização explícita; não há
+itens para preservar ou remover. O próximo plano deve usar o endpoint REST
+específico de criação de campos tipados e decidir formalmente se os nomes
+derivados serão aceitos ou se os quatro campos serão removidos e recriados com
+schema XML/internal names estáveis.
+
+O provisionador local agora usa `fields/createfieldasxml`, com XML escapado,
+`Name`/`StaticName` estáveis e suporte aos tipos `Text`, `Choice`, `Boolean` e
+`DateTime`. A suíte completa foi atualizada e passou. Nenhuma nova escrita
+remota foi executada após essa correção; a retomada exige novo `inspect`, revisão
+dos quatro campos existentes e confirmação explícita do plano REST corrigido.
 
 ## Critérios de aceite local
 
