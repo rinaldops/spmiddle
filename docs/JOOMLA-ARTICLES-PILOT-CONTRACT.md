@@ -108,6 +108,46 @@ pode ser revisado. Não constitui autorização para criar a lista. O provisioni
 continua bloqueado até a revisão administrativa do schema, permissões, índices,
 fingerprint do plano e rollback.
 
+## Revisão administrativa do plano
+
+O plano foi revisado localmente contra o resultado remoto `missing`. A revisão
+classifica as ações como aditivas e não destrutivas:
+
+```text
+lista: 1
+campos: 7
+índices: 4
+destrutivas: não
+inspect writes: 0
+apply: não executado
+```
+
+Um fingerprint SHA-256 determinístico pode ser gerado com:
+
+```powershell
+node tools/review-joomla-articles-provisioning-plan.mjs
+```
+
+O relatório não contém GUID, token, cookie, payload editorial ou dado pessoal.
+Ele registra o destino server-relative, a versão do schema, as ações propostas,
+as ressalvas dos índices e o fingerprint que deverá ser conferido imediatamente
+antes de qualquer `apply` autorizado.
+
+### Rollback administrativo
+
+O piloto não deve inserir dados durante a criação da estrutura. Se ocorrer
+aplicação parcial, a operação deve ser interrompida; não se deve repetir o plano
+às cegas. O procedimento é:
+
+1. executar novo `inspect` e comparar a estrutura observada;
+2. identificar somente os componentes criados por este fingerprint;
+3. aplicar uma compensação estrutural explicitamente autorizada, se necessária;
+4. executar nova inspeção/verificação;
+5. manter o runtime e os assets inalterados até a validação final.
+
+O relatório deixa o plano **pronto para confirmação explícita**, mas não concede
+essa confirmação e não executa `apply`.
+
 ## Critérios de aceite local
 
 Os testes devem comprovar:
