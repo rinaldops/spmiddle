@@ -148,6 +148,27 @@ aplicação parcial, a operação deve ser interrompida; não se deve repetir o 
 O relatório deixa o plano **pronto para confirmação explícita**, mas não concede
 essa confirmação e não executa `apply`.
 
+## Bloqueio operacional da criação
+
+As rotas administrativas nativas foram verificadas pela sessão autorizada do
+FIORI-AUTO, sem escrita:
+
+- `SiteContents.aspx`: erro genérico do SharePoint;
+- `viewlsts.aspx`: redirecionamento para a Home;
+- `viewlsts.aspx?view=14`: Conteúdo do Site abre, mas sem comando de criação;
+- `listnew.aspx` e `newlist.aspx`: erro genérico;
+- `createlist.aspx`: carrega somente o shell, sem formulário.
+
+Os detalhes técnicos exibidos pelo SharePoint informaram apenas “An unexpected
+error has occurred”, sem uma causa funcional ou permissão específica. O
+identificador de correlação não foi registrado no repositório.
+
+Conclusão operacional: o plano permanece aprovado somente para revisão, porém a
+criação está bloqueada pela disponibilidade da UI administrativa. O próximo
+passo externo é o administrador do site investigar/restaurar a criação nativa
+de listas no subsite `/teams/camap-agp/db`. Até essa correção, não usar REST de
+escrita, JavaScript injetado ou outro canal alternativo para contornar a UI.
+
 ## Critérios de aceite local
 
 Os testes devem comprovar:
