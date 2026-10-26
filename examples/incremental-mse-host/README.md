@@ -43,8 +43,10 @@ evidência do fake host, não da página ASPX.
 Em uma página real, o diagnóstico mostrou que o Modern Script Editor renderizou
 o HTML/CSS, mas não executou o `<script>` inline. O runtime separado está em
 [`mse-preview-runtime.js`](mse-preview-runtime.js). O arquivo deve ser publicado
-como asset externo em uma pasta versionada e autorizada, sem sobrescrever uma
-versão existente. O trecho de referência está em
+como asset externo em uma pasta estável e autorizada. O histórico do arquivo
+fica no versionamento nativo do SharePoint; o histórico do código e o rollback
+ficam nos commits do Git. Não criar uma pasta nova para cada versão. O trecho
+de referência está em
 [`mse-preview-external-script.html`](mse-preview-external-script.html).
 
 O HTML do snippet permanece responsável pela estrutura e o runtime externo pela
