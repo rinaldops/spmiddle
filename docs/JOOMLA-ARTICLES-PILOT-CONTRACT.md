@@ -59,6 +59,30 @@ consumidor.
 - Antes de provisioning será necessário executar `inspect`, revisar permissões,
   confirmar o subsite de produção e preparar rollback do schema.
 
+## Plano de inspect
+
+O plano declarativo foi exercitado localmente com um transporte simulado de
+alvo ausente. O dry-run usa o caminho server-relative autorizado
+`/teams/camap-agp/db`, mas não abre conexão nem acessa o SharePoint. O resultado
+esperado é `missing`, com ações propostas para a lista, campos e índices.
+
+```powershell
+node tools/prepare-joomla-articles-provisioning-plan.mjs
+```
+
+O comando deve informar:
+
+- `mode: local-inspect-dry-run`;
+- `apply: not-run`;
+- `productionAccess: not-run`;
+- zero chamadas diferentes de `GET`;
+- ações propostas, sem executá-las.
+
+`inspect` não equivale a aprovação de provisioning. Qualquer leitura real do
+subsite e qualquer `apply` permanecem etapas administrativas separadas, sujeitas
+à confirmação do destino de produção, permissões, fingerprint do plano e
+rollback.
+
 ## Critérios de aceite local
 
 Os testes devem comprovar:
