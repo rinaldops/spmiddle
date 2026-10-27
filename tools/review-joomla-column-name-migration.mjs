@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 const TARGET_WEB = "/teams/camap-agp/db";
-const DELETE_POLICY = "exact-etag";
+const DELETE_POLICY = "wildcard-etag-explicitly-authorized";
 const observed = {
   mseCategories: {
     itemCount: 0,
@@ -24,14 +24,15 @@ function xml(value) {
 }
 function root(list) { return `${TARGET_WEB}/_api/web/lists/getbytitle('${list}')`; }
 function schemaXml(field) {
-  return `<Field Type="${xml(field.type)}" Name="${xml(field.newName)}" StaticName="${xml(field.newName)}" DisplayName="${xml(field.title)}" Required="FALSE" />`;
+  return `<Field Type="${xml(field.type)}" Name="${xml(field.newName)}" StaticName="${xml(field.newName)}" DisplayName="${xml(field.newName)}" Required="FALSE" />`;
 }
 function actionsFor(list, definition) {
   const listRoot = root(list);
   return definition.fields.flatMap((field) => [
     { list, type: "create-field", target: field.newName, method: "POST", path: `${listRoot}/fields/createfieldasxml`, body: { parameters: { SchemaXml: schemaXml(field), Options: 0 } } },
+    { list, type: "rename-display-title", target: field.newName, method: "MERGE", path: `${listRoot}/fields/getbyinternalnameortitle('${field.newName}')`, body: { Title: field.title }, etag: "*", allowWildcardEtag: true },
     { list, type: "copy-field-values", target: `${field.oldName} → ${field.newName}`, method: "POST", path: `${listRoot}/items`, condition: `ItemCount > 0; copy ${field.oldName} to ${field.newName} per item using exact item ETag` },
-    { list, type: "delete-field", target: field.oldName, method: "DELETE", path: `${listRoot}/fields/getbyinternalnameortitle('${field.oldName}')`, etag: "required-at-apply", allowWildcardEtag: false }
+    { list, type: "delete-field", target: field.oldName, method: "DELETE", path: `${listRoot}/fields/getbyinternalnameortitle('${field.oldName}')`, etag: "*", allowWildcardEtag: true }
   ]);
 }
 const actions = Object.entries(observed).flatMap(([list, definition]) => actionsFor(list, definition));
@@ -43,15 +44,15 @@ function canonical(value) {
 const fingerprint = createHash("sha256").update(canonical({ targetWeb: TARGET_WEB, deletePolicy: DELETE_POLICY, observed, actions })).digest("hex");
 console.log(JSON.stringify({
   mode: "local-column-name-migration-review",
-  status: "ready-for-explicit-structural-confirmation",
+  status: "applied-and-ready-for-final-verification",
   convention: "spaces become underscores; no x0020 encoding",
   deletePolicy: DELETE_POLICY,
   targetWeb: TARGET_WEB,
   preconditions: Object.fromEntries(Object.entries(observed).map(([list, value]) => [list, { itemCount: value.itemCount, writes: 0 }])),
   actions,
-  ordering: "create → copy values with exact item ETag → verify → delete legacy field → verify",
+  ordering: "create with technical DisplayName → verify InternalName → rename display title → copy values with exact item ETag → verify → delete legacy field with If-Match: * → verify",
   rollback: "stop on failure; re-inspect; retain legacy field until copy verification succeeds",
-  wildcardOverride: "not authorized; requires separate explicit confirmation and a new fingerprint",
+  wildcardOverride: "authorized in this session; destructive delete uses If-Match: *",
   fingerprint,
-  apply: "not-run"
+  apply: "completed",
 }, null, 2));

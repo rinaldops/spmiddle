@@ -238,10 +238,11 @@ obtida imediatamente antes do apply, recriar por `fields/createfieldasxml` com
 contém exclusões e exige confirmação estrutural explícita. Nenhuma ação desse
 plano foi aplicada remotamente.
 
-Como o SharePoint não expôs ETag nos GETs dos campos, a política atual do plano é
-`exact-etag`, com `allowWildcardEtag: false`. O uso de `If-Match: *` permanece
-bloqueado; exigiria confirmação destrutiva separada, novo fingerprint e
-verificação imediatamente antes da aplicação.
+Como o SharePoint não expôs ETag nos GETs dos campos, a política anterior
+`exact-etag` não era aplicável. Após autorização destrutiva explícita, o plano
+atual usa `wildcard-etag-explicitly-authorized` e `allowWildcardEtag: true`,
+limitado aos quatro campos legados identificados. A aplicação exige inspeção
+imediatamente anterior e verificação posterior.
 
 ### Regra de nomes de campos
 
