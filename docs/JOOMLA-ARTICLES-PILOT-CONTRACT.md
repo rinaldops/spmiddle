@@ -172,15 +172,15 @@ O fluxo operacional passa a ser exclusivamente REST pelo SPMIDDLE. A UI pode
 ser usada apenas para diagnóstico visual ou recuperação administrativa, nunca
 como etapa necessária do processo de dados.
 
-### Estado REST após a criação-base e tentativa parcial
+### Estado REST após a criação-base e provisioning estrutural
 
 Uma leitura autenticada confirmou:
 
 ```text
 lista: mseContent
 ItemCount: 0
-campos criados: Alias, Publish start, Publish end, Category
-campos ausentes: EditorialState, Featured
+campos criados: Alias, Category, Publish_start, Publish_end,
+  EditorialState, Featured
 /indexes: indisponível (HTTP 404)
 ```
 
@@ -194,12 +194,11 @@ os internal names `Publish_x0020_start` e `Publish_x0020_end` a partir do títul
 em vez de respeitar os nomes contratuais. Esses nomes são rejeitados pelo
 contrato e não serão usados como aliases.
 
-O provisioning foi interrompido antes de nova escrita. A compensação, se
-necessária, deve ser feita somente por REST e com autorização explícita; não há
-itens para preservar ou remover. O próximo plano deve usar o endpoint REST
-específico de criação de campos tipados e decidir formalmente se os nomes
-derivados serão aceitos ou se os quatro campos serão removidos e recriados com
-schema XML/internal names estáveis.
+O provisioning estrutural foi retomado somente após inspeção e confirmação
+explícita. `EditorialState` foi criado como `Choice`, com as quatro opções e
+default `Unpublished`; `Featured` foi criado como `Boolean`, com default falso.
+Ambos foram verificados por REST com internal names aderentes. Não houve criação
+de itens editoriais.
 
 O contrato canônico passa a exigir `Publish_start` e `Publish_end`, preservando
 os títulos exibidos `Publish start` e `Publish end`. Os campos legados
@@ -208,11 +207,11 @@ REST tipado, em uma migração estrutural separada. Como a lista está vazia, n�
 há dados editoriais a migrar; ainda assim, a remoção exige verificação e
 autorização explícita.
 
-O provisionador local agora usa `fields/createfieldasxml`, com XML escapado,
+O provisionador local usa `fields/createfieldasxml`, com XML escapado,
 `Name`/`StaticName` estáveis e suporte aos tipos `Text`, `Choice`, `Boolean` e
-`DateTime`. A suíte completa foi atualizada e passou. Nenhuma nova escrita
-remota foi executada após essa correção; a retomada exige novo `inspect`, revisão
-dos quatro campos existentes e confirmação explícita do plano REST corrigido.
+`DateTime`. O provisioning de `EditorialState` e `Featured` foi executado por
+REST tipado após novo `inspect` e confirmação explícita; a verificação final
+confirmou os campos e `ItemCount: 0`.
 
 ## Plano de migração dos campos de data
 
