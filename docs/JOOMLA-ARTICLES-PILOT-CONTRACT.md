@@ -303,3 +303,23 @@ retorna HTTP 404 em `SiteAssets`. Também não há raiz/região de artigos no DO
 Esse é o estado esperado: o preview permanece local e não publicado. Upload do
 asset, alteração da página e validação visual do módulo continuam sendo uma
 decisão operacional separada.
+
+### Publicação controlada em `Preview.aspx`
+
+Com autorização explícita, o runtime foi publicado somente no host de preview:
+
+```text
+/teams/camap-agp/SiteAssets/mse-platform/modules/mod_articles_latest/0.1.0/mse-preview-joomla-articles-readonly-runtime.js
+```
+
+O asset retornou HTTP 200 e a alteração mínima em
+`/teams/camap-agp/SitePages/Preview.aspx` foi aplicada por REST com ETag
+específico e publicada com sucesso. O `CanvasContent1` final preserva os
+runtimes CAMAP e de categorias e contém a nova tag de artigos; `Default.aspx`
+permaneceu sem a tag e não foi alterada.
+
+Após recarregar a página, a sessão autenticada não montou o MSE no DOM (nem a
+região de categorias já existente), embora o asset tenha sido carregado com
+HTTP 200 e o canvas remoto confirme as três referências esperadas. Portanto a
+publicação está registrada, mas a validação funcional/visual permanece
+pendente; não há aceite para migração a `Default.aspx`.
