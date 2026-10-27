@@ -70,25 +70,31 @@ a `NewForm.aspx` moderna forneceu a evidência funcional sem escrita.
 `Preview.aspx` foi inspecionada pelo FIORI-AUTO e o host SPMIDDLE/CAMAP atual
 foi confirmado, incluindo a raiz `[data-spmiddle-mse-root]`, o runtime legado e
 a região de categorias renderizada. A webpart MSE está apontando para o caminho
-estável:
+imutável validado:
 
 ```html
-<script src="/teams/camap-agp/SiteAssets/spmiddle/preview/joomla-categories-readonly/mse-preview-joomla-categories-readonly-runtime.js"></script>
+<script src="/teams/camap-agp/SiteAssets/spmiddle/preview/joomla-categories-readonly/0.1.1/mse-preview-joomla-categories-readonly-runtime.js"></script>
 ```
 
-Não devem ser criadas pastas com nomes de versão ou candidato:
+O asset corrigido foi publicado em uma pasta imutável de versão. Não se deve
+sobrescrever essa versão; novas correções devem usar outra pasta versionada:
 
 ```text
 existingHost: confirmed
 categoriesRegion: present-and-rendered
 pageWrite: manual-mse-edit-stable-path
-stablePathSwitch: verified
+versionedPathSwitch: verified (0.1.1)
 visibleStatus: Leitura concluída: 0 categorias
 ```
 
 O resultado `0 categorias` é esperado porque a lista não contém itens. Não foi
 usado `browser.evaluate` para injetar JavaScript e não foi feita nova escrita
 na lista.
+
+A versão `0.1.1` corrigiu a referência do campo `ParentId` para o nome canônico
+`Parent_category`. A validação em nova instância do FIORI-AUTO confirmou o
+asset HTTP 200, a região renderizada e a mensagem `Leitura concluída: 0
+categorias`; o asset anterior não é mais referenciado pela página.
 
 ## Aceitação remota
 

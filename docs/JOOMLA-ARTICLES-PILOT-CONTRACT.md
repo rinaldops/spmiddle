@@ -304,6 +304,25 @@ Esse é o estado esperado: o preview permanece local e não publicado. Upload do
 asset, alteração da página e validação visual do módulo continuam sendo uma
 decisão operacional separada.
 
+### Estado atual do preview
+
+Após a restauração manual da `Preview.aspx`, o host foi validado em uma nova
+instância do FIORI-AUTO. O runtime CAMAP montou e exibiu 27 publicações; o
+runtime de artigos não foi incluído. A região de categorias montou e exibiu
+`Leitura concluída: 0 categorias`.
+
+O asset de categorias usado no preview foi corrigido e publicado em caminho
+imutável:
+
+```text
+/teams/camap-agp/SiteAssets/spmiddle/preview/joomla-categories-readonly/0.1.1/mse-preview-joomla-categories-readonly-runtime.js
+```
+
+A versão anterior usava `ParentId`, enquanto o schema canônico usa
+`Parent_category`. A versão `0.1.1` foi validada com HTTP 200 e consulta REST
+HTTP 200 à lista vazia `mseCategories`. `Preview.aspx` aponta para `0.1.1`;
+`Default.aspx` continua fora do escopo.
+
 ### Publicação controlada em `Preview.aspx`
 
 Com autorização explícita, o runtime foi publicado somente no host de preview:
