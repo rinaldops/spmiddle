@@ -285,3 +285,12 @@ O gate final foi executado no subsite autorizado `/teams/camap-agp/db`.
 HTTP 200 e os fixtures temporários não existem mais. O endpoint `/indexes`
 continua indisponível no tenant (`HTTP 404`) e permanece documentado como
 limitação, sem impedir o contrato read-only validado.
+
+### Próxima etapa de integração local
+
+O preview local do MSE foi preparado em
+`examples/incremental-mse-host/mse-preview-joomla-articles-readonly-runtime.js`.
+Ele usa somente GET, allowlist dos campos contratados, filtro de estado/janela,
+categoria opcional, `Created desc` e limite. O arquivo não foi publicado no
+SharePoint; publicação de asset, alteração de página e validação visual ficam
+para um gate operacional separado.
