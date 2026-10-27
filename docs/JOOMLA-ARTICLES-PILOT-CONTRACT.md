@@ -64,6 +64,11 @@ consumidor.
   categoria. Todos retornaram conjunto vazio porque `ItemCount` permanece 0.
 - A validação com resultados editoriais reais permanece pendente até haver
   autorização específica para inserir artigos de teste ou dados editoriais.
+- A validação funcional autorizada foi executada com quatro fixtures temporários:
+  um publicado e elegível, um não publicado, um futuro e um expirado. As
+  consultas REST retornaram somente o elegível, respeitaram categoria, janela,
+  ordenação e limite. Os quatro fixtures foram removidos por REST com ETags
+  exatas, e a verificação final retornou `ItemCount: 0`.
 - Antes de provisioning será necessário executar `inspect`, revisar permissões,
   confirmar o subsite de produção e preparar rollback do schema.
 
