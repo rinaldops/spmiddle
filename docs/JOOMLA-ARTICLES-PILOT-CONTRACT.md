@@ -11,7 +11,7 @@ listar artigos recentes publicados:
 
 - uma categoria opcional por instância;
 - estado `Published`;
-- janela opcional de publicação (`PublishStart`/`PublishEnd`);
+- janela opcional de publicação (`Publish_start`/`Publish_end`);
 - ordenação por `Created` decrescente;
 - quantidade limitada por `count`, padrão 5;
 - leitura somente dos campos contratados.
@@ -28,8 +28,8 @@ layouts alternativos, sufixos CSS e cache do módulo.
 | `Alias` | Text | sim | alias estável |
 | `EditorialState` | Choice | sim | `Published`, `Unpublished`, `Archived`, `Trashed` |
 | `Featured` | Boolean | não | filtro de destaque futuro |
-| `PublishStart` | DateTime | não | início da vigência |
-| `PublishEnd` | DateTime | não | fim da vigência |
+| `Publish_start` | DateTime | não | início da vigência |
+| `Publish_end` | DateTime | não | fim da vigência |
 | `Category` | Text | não | categoria única por instância |
 
 `Id` e `Created` são campos nativos somente leitura do SharePoint. O adapter
@@ -42,8 +42,8 @@ Um item é elegível quando:
 
 ```text
 EditorialState = Published
-AND (PublishStart IS NULL OR PublishStart <= now)
-AND (PublishEnd IS NULL OR PublishEnd >= now)
+AND (Publish_start IS NULL OR Publish_start <= now)
+AND (Publish_end IS NULL OR Publish_end >= now)
 AND (Category = category, quando a instância informar category)
 ```
 
@@ -191,7 +191,8 @@ campos. A segunda tentativa criou quatro campos, mas confirmou duas limitações
 adicionais do endpoint genérico: Choice exige uma operação/payload tipado e
 Boolean não aceitou o valor JSON usado. Para os campos de data, o tenant derivou
 os internal names `Publish_x0020_start` e `Publish_x0020_end` a partir do título,
-em vez de respeitar os nomes contratuais.
+em vez de respeitar os nomes contratuais. Esses nomes são rejeitados pelo
+contrato e não serão usados como aliases.
 
 O provisioning foi interrompido antes de nova escrita. A compensação, se
 necessária, deve ser feita somente por REST e com autorização explícita; não há
@@ -200,17 +201,32 @@ específico de criação de campos tipados e decidir formalmente se os nomes
 derivados serão aceitos ou se os quatro campos serão removidos e recriados com
 schema XML/internal names estáveis.
 
-Como a lista permanece vazia, foi adotada a reconciliação não destrutiva dos
-nomes efetivos das datas: o contrato local passa a referenciar
-`Publish_x0020_start` e `Publish_x0020_end`, preservando os títulos exibidos
-`Publish start` e `Publish end`. Não serão removidos nem recriados campos
-existentes apenas para normalizar seus nomes internos.
+O contrato canônico passa a exigir `Publish_start` e `Publish_end`, preservando
+os títulos exibidos `Publish start` e `Publish end`. Os campos legados
+`Publish_x0020_start` e `Publish_x0020_end` devem ser removidos e recriados via
+REST tipado, em uma migração estrutural separada. Como a lista está vazia, não
+há dados editoriais a migrar; ainda assim, a remoção exige verificação e
+autorização explícita.
 
 O provisionador local agora usa `fields/createfieldasxml`, com XML escapado,
 `Name`/`StaticName` estáveis e suporte aos tipos `Text`, `Choice`, `Boolean` e
 `DateTime`. A suíte completa foi atualizada e passou. Nenhuma nova escrita
 remota foi executada após essa correção; a retomada exige novo `inspect`, revisão
 dos quatro campos existentes e confirmação explícita do plano REST corrigido.
+
+### Regra de nomes de campos
+
+Campos novos devem usar internal names legíveis, sem espaços e sem a codificação
+REST `x0020`. A convenção é substituir espaços por underscore, por exemplo:
+
+```text
+Publish start → Publish_start
+Publish end   → Publish_end
+```
+
+O display name pode continuar contendo espaços. O internal name, porém, é parte
+do contrato persistente e não deve ser derivado automaticamente do título por
+uma operação que produza `x0020`.
 
 ## Critérios de aceite local
 

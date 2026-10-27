@@ -29,14 +29,11 @@ export const MSE_CONTENT_SCHEMA = defineListSchema({
       defaultValue: "Unpublished"
     },
     { internalName: "Featured", displayName: "Featured", type: "Boolean", defaultValue: false },
-    // The tenant derived these names from the display titles during the
-    // initial UI-only bootstrap; changing them now would require destructive
-    // cleanup.
-    { internalName: "Publish_x0020_start", displayName: "Publish start", type: "DateTime" },
-    { internalName: "Publish_x0020_end", displayName: "Publish end", type: "DateTime" },
+    { internalName: "Publish_start", displayName: "Publish start", type: "DateTime" },
+    { internalName: "Publish_end", displayName: "Publish end", type: "DateTime" },
     { internalName: "Category", displayName: "Category", type: "Text" }
   ],
-  indexes: ["EditorialState", "Category", "PublishStart", "PublishEnd"]
+  indexes: ["EditorialState", "Category", "Publish_start", "Publish_end"]
 });
 
 const ARTICLES_MAPPING = Object.freeze({
@@ -46,8 +43,8 @@ const ARTICLES_MAPPING = Object.freeze({
   alias: { internalName: "Alias", readOnly: true },
   editorialState: { internalName: "EditorialState", readOnly: true },
   featured: { internalName: "Featured", readOnly: true },
-  publishStart: { internalName: "PublishStart", readOnly: true },
-  publishEnd: { internalName: "PublishEnd", readOnly: true },
+  publishStart: { internalName: "Publish_start", readOnly: true },
+  publishEnd: { internalName: "Publish_end", readOnly: true },
   category: { internalName: "Category", readOnly: true }
 });
 
@@ -116,7 +113,7 @@ export function createReadOnlyArticlesClient({ items = [] } = {}) {
     async getListItems(query) {
       calls.push({ method: "GET", query });
       const filter = String(query?.filter ?? "");
-      const current = filter.match(/PublishStart le '([^']+)'/)?.[1] ?? new Date().toISOString();
+      const current = filter.match(/Publish_start le '([^']+)'/)?.[1] ?? new Date().toISOString();
       const category = filter.match(/Category eq '([^']+)'/)?.[1] ?? null;
       const visible = items
         .filter((item) => item.EditorialState === "Published")
