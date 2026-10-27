@@ -54,7 +54,10 @@ function fieldXml(field) {
   if (field.type === "Choice") {
     attributes.push(["Format", "Dropdown"], ["FillInChoice", "FALSE"]);
   }
-  if (field.defaultValue !== undefined) attributes.push(["Default", field.defaultValue]);
+  if (field.defaultValue !== undefined) {
+    const defaultValue = typeof field.defaultValue === "boolean" ? (field.defaultValue ? "1" : "0") : field.defaultValue;
+    attributes.push(["Default", defaultValue]);
+  }
   const head = attributes.map(([name, value]) => `${name}="${xml(value)}"`).join(" ");
   const choices = field.type === "Choice"
     ? `<CHOICES>${field.choices.map((choice) => `<CHOICE>${xml(choice)}</CHOICE>`).join("")}</CHOICES>`

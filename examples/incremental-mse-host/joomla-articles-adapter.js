@@ -29,8 +29,11 @@ export const MSE_CONTENT_SCHEMA = defineListSchema({
       defaultValue: "Unpublished"
     },
     { internalName: "Featured", displayName: "Featured", type: "Boolean", defaultValue: false },
-    { internalName: "PublishStart", displayName: "Publish start", type: "DateTime" },
-    { internalName: "PublishEnd", displayName: "Publish end", type: "DateTime" },
+    // The tenant derived these names from the display titles during the
+    // initial UI-only bootstrap; changing them now would require destructive
+    // cleanup.
+    { internalName: "Publish_x0020_start", displayName: "Publish start", type: "DateTime" },
+    { internalName: "Publish_x0020_end", displayName: "Publish end", type: "DateTime" },
     { internalName: "Category", displayName: "Category", type: "Text" }
   ],
   indexes: ["EditorialState", "Category", "PublishStart", "PublishEnd"]

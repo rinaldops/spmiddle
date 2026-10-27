@@ -200,6 +200,12 @@ específico de criação de campos tipados e decidir formalmente se os nomes
 derivados serão aceitos ou se os quatro campos serão removidos e recriados com
 schema XML/internal names estáveis.
 
+Como a lista permanece vazia, foi adotada a reconciliação não destrutiva dos
+nomes efetivos das datas: o contrato local passa a referenciar
+`Publish_x0020_start` e `Publish_x0020_end`, preservando os títulos exibidos
+`Publish start` e `Publish end`. Não serão removidos nem recriados campos
+existentes apenas para normalizar seus nomes internos.
+
 O provisionador local agora usa `fields/createfieldasxml`, com XML escapado,
 `Name`/`StaticName` estáveis e suporte aos tipos `Text`, `Choice`, `Boolean` e
 `DateTime`. A suíte completa foi atualizada e passou. Nenhuma nova escrita

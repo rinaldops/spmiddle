@@ -171,6 +171,7 @@ await run("creates typed fields with escaped XML and choice values", async () =>
   assert.match(fields[0].body.parameters.SchemaXml, /State &amp; status/);
   assert.match(fields[0].body.parameters.SchemaXml, /<CHOICE>R&amp;D<\/CHOICE>/);
   assert.match(fields[1].body.parameters.SchemaXml, /Type="Boolean"/);
+  assert.match(fields[1].body.parameters.SchemaXml, /Default="0"/);
   assert.match(fields[2].body.parameters.SchemaXml, /Type="DateTime"/);
 });
 
