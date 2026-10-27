@@ -1,7 +1,7 @@
 # Plano de promoção de `Preview.aspx` para `Default.aspx`
 
-**Status:** somente plano; nenhuma alteração de `Default.aspx` autorizada ou
-executada nesta etapa.
+**Status:** promoção bloqueada até a conclusão do teste integral em
+`Preview.aspx`; nenhuma alteração de `Default.aspx` autorizada ou executada.
 
 ## Estado inspecionado
 
@@ -15,6 +15,22 @@ Em inspeção read-only pelo FIORI-AUTO no site `/teams/camap-agp`:
 `Preview.aspx` está sem check-out e renderiza o host CAMAP com 27 publicações e
 `Leitura concluída: 0 categorias`. `Default.aspx` permanece fora do fluxo de
 integração e não foi alterada por este gate.
+
+## Teste funcional do preview
+
+Em nova instância do FIORI-AUTO, sem escrita remota, foram exercitados:
+
+- consulta textual: 27 → 2 itens;
+- filtro de categoria e estado: aplicado sem navegação;
+- ordenação mais antiga: aplicada sem reload;
+- alternância de layout: região interna atualizada;
+- ação de atualização: bloqueada com `Modo somente leitura`;
+- fallback externo: registrado sem navegação automática.
+
+O resultado final manteve uma única raiz MSE, a mesma URL e `fullReloads=0`.
+Esse gate confirma o comportamento incremental do host, mas não substitui a
+validação de dados editoriais reais do contrato de artigos, que permanece fora
+do preview atual.
 
 ## Delta mínimo planejado
 
