@@ -1,6 +1,6 @@
 # Contrato do piloto de artigos — `mod_articles_latest`
 
-**Status:** lista-base criada; provisioning REST parcial interrompido; nenhum registro, página ou asset foi alterado
+**Status:** schema estrutural provisionado e contrato REST read-only validado; nenhum registro, página ou asset foi alterado
 **Lista candidata:** `mseContent`
 **Operação:** somente leitura
 
@@ -59,6 +59,11 @@ consumidor.
 - O adapter usa allowlist de campos e lista.
 - O cliente de teste rejeita create, update e delete.
 - Nenhum runtime ou asset foi publicado.
+- A validação autenticada read-only confirmou HTTP 200 para metadados, schema,
+  consulta geral, filtro de publicados com janela de vigência e filtro por
+  categoria. Todos retornaram conjunto vazio porque `ItemCount` permanece 0.
+- A validação com resultados editoriais reais permanece pendente até haver
+  autorização específica para inserir artigos de teste ou dados editoriais.
 - Antes de provisioning será necessário executar `inspect`, revisar permissões,
   confirmar o subsite de produção e preparar rollback do schema.
 

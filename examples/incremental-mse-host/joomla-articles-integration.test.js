@@ -10,7 +10,7 @@ import {
 assert.equal(ARTICLES_LIST_NAME, "mseContent");
 assert.equal(MSE_CONTENT_SCHEMA.internalName, "mseContent");
 assert.deepEqual(MSE_CONTENT_SCHEMA.indexes.map((index) => index.fields), [
-  ["EditorialState"], ["Category"], ["PublishStart"], ["PublishEnd"]
+  ["EditorialState"], ["Category"], ["Publish_start"], ["Publish_end"]
 ]);
 
 const now = "2026-10-26T12:00:00.000Z";
@@ -27,7 +27,7 @@ const articles = await listPublishedArticles({ repository, category: "news", cou
 
 assert.deepEqual(articles.map((item) => item.title), ["Newer", "Older"]);
 assert.equal(client.calls[0].method, "GET");
-assert.deepEqual(client.calls[0].query.select, ["Id", "Created", "Title", "Alias", "EditorialState", "Featured", "PublishStart", "PublishEnd", "Category"]);
+assert.deepEqual(client.calls[0].query.select, ["Id", "Created", "Title", "Alias", "EditorialState", "Featured", "Publish_start", "Publish_end", "Category"]);
 assert.match(client.calls[0].query.filter, /EditorialState eq 'Published'/);
 assert.match(client.calls[0].query.filter, /Category eq 'news'/);
 assert.deepEqual(client.calls[0].query.orderBy, [{ field: "Created", direction: "desc" }]);
