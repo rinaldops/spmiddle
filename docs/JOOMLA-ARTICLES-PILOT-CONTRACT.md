@@ -214,6 +214,30 @@ O provisionador local agora usa `fields/createfieldasxml`, com XML escapado,
 remota foi executada após essa correção; a retomada exige novo `inspect`, revisão
 dos quatro campos existentes e confirmação explícita do plano REST corrigido.
 
+## Plano de migração dos campos de data
+
+O plano local para corrigir os dois internal names codificados pode ser revisado
+com:
+
+```powershell
+node tools/review-joomla-articles-date-field-migration.mjs
+```
+
+Pré-condições:
+
+```text
+ItemCount: 0
+legados: Publish_x0020_start, Publish_x0020_end
+novos: Publish_start, Publish_end
+writes no review: 0
+```
+
+Para cada campo, a ordem planejada é excluir o legado por REST, usando a ETag
+obtida imediatamente antes do apply, recriar por `fields/createfieldasxml` com
+`Name` e `StaticName` iguais ao nome com underscore e executar `verify`. O plano
+contém exclusões e exige confirmação estrutural explícita. Nenhuma ação desse
+plano foi aplicada remotamente.
+
 ### Regra de nomes de campos
 
 Campos novos devem usar internal names legíveis, sem espaços e sem a codificação
