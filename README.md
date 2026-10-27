@@ -65,6 +65,11 @@ publicado.
 O plano formal para uma integração futura, ainda sem migração autorizada, está
 em [`docs/INTEGRATION-MSE-PLATFORM.md`](docs/INTEGRATION-MSE-PLATFORM.md).
 
+O guia completo para desenvolvedores está em
+[`docs/DEVELOPMENT-GUIDE.md`](docs/DEVELOPMENT-GUIDE.md). Ele reúne arquitetura,
+transporte, schemas, registry, mappers, repositories, arquivos, segurança,
+provisioning, testes e exemplos de integração.
+
 A diretriz para manter o container MSE vivo e evitar reload completo da página
 em ações internas está em
 [`docs/INCREMENTAL-HOST-UPDATES.md`](docs/INCREMENTAL-HOST-UPDATES.md).
