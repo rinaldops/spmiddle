@@ -294,3 +294,12 @@ Ele usa somente GET, allowlist dos campos contratados, filtro de estado/janela,
 categoria opcional, `Created desc` e limite. O arquivo não foi publicado no
 SharePoint; publicação de asset, alteração de página e validação visual ficam
 para um gate operacional separado.
+
+### Gate operacional de publicação
+
+Uma inspeção read-only pela sessão FIORI-AUTO autorizada confirmou que
+`SitePages/Default.aspx` responde HTTP 200, enquanto o asset de artigos ainda
+retorna HTTP 404 em `SiteAssets`. Também não há raiz/região de artigos no DOM.
+Esse é o estado esperado: o preview permanece local e não publicado. Upload do
+asset, alteração da página e validação visual do módulo continuam sendo uma
+decisão operacional separada.
