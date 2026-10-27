@@ -12,7 +12,7 @@ assert.match(runtime, /\/teams\/camap-agp\/db/);
 assert.match(runtime, /mseCategories/);
 assert.match(runtime, /findMany/);
 assert.match(runtime, /SPMIDDLE_CATEGORIES_REPOSITORY/);
-assert.match(runtime, /Id.*Title.*Alias.*Extension.*Description.*ParentId.*Level.*Ordering.*Published/);
+  assert.match(runtime, /Id.*Title.*Alias.*Extension.*Description.*Parent_category.*Level.*Ordering.*Published/);
 assert.match(runtime, /Published%20eq%20%27Published%27/);
 assert.match(runtime, /Ordering%20asc/);
 assert.match(runtime, /method: "GET"/);

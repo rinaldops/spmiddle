@@ -22,7 +22,7 @@ export const MSE_CATEGORIES_SCHEMA = defineListSchema({
     { internalName: "Alias", displayName: "Alias", type: "Text", required: true },
     { internalName: "Extension", displayName: "Extension", type: "Text", required: true },
     { internalName: "Description", displayName: "Description", type: "Note" },
-    { internalName: "ParentId", displayName: "Parent category", type: "Number", defaultValue: 0 },
+    { internalName: "Parent_category", displayName: "Parent category", type: "Number", defaultValue: 0 },
     { internalName: "Level", displayName: "Level", type: "Number", defaultValue: 1 },
     { internalName: "Ordering", displayName: "Ordering", type: "Number", defaultValue: 0 },
     {
@@ -33,7 +33,7 @@ export const MSE_CATEGORIES_SCHEMA = defineListSchema({
       choices: ["Published", "Unpublished", "Trashed"],
       defaultValue: "Published"
     },
-    { internalName: "ParamsJson", displayName: "Parameters (JSON)", type: "Note" }
+    { internalName: "Parameters_JSON", displayName: "Parameters (JSON)", type: "Note" }
   ],
   indexes: ["Alias", "Extension", "Published", "Ordering"]
 });
@@ -44,11 +44,11 @@ const CATEGORIES_MAPPING = Object.freeze({
   alias: { internalName: "Alias", required: true },
   extension: { internalName: "Extension", required: true },
   description: "Description",
-  parentId: "ParentId",
+  parentId: "Parent_category",
   level: "Level",
   ordering: "Ordering",
   published: { internalName: "Published", required: true },
-  paramsJson: "ParamsJson"
+  paramsJson: "Parameters_JSON"
 });
 
 export function createCategoriesRepository({ client } = {}) {

@@ -43,11 +43,11 @@ Title*        text
 Alias*        text
 Extension*    text
 Description   note
-ParentId      number
+Parent_category number
 Level         number
 Ordering      number
 Published*    choice
-ParamsJson    note
+Parameters_JSON note
 ```
 
 Isso confirma o schema funcional do piloto. As opções da escolha `Published`

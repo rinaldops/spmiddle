@@ -8,9 +8,9 @@ import {
 
 const client = createReadOnlyCategoriesClient({
   items: [
-    { Id: 2, Title: "Second", Alias: "second", Extension: "com_content", ParentId: 0, Level: 1, Ordering: 2, Published: "Published" },
-    { Id: 1, Title: "First", Alias: "first", Extension: "com_content", ParentId: 0, Level: 1, Ordering: 1, Published: "Published" },
-    { Id: 3, Title: "Draft", Alias: "draft", Extension: "com_content", ParentId: 0, Level: 1, Ordering: 3, Published: "Unpublished" }
+    { Id: 2, Title: "Second", Alias: "second", Extension: "com_content", Parent_category: 0, Level: 1, Ordering: 2, Published: "Published" },
+    { Id: 1, Title: "First", Alias: "first", Extension: "com_content", Parent_category: 0, Level: 1, Ordering: 1, Published: "Published" },
+    { Id: 3, Title: "Draft", Alias: "draft", Extension: "com_content", Parent_category: 0, Level: 1, Ordering: 3, Published: "Unpublished" }
   ]
 });
 const repository = createCategoriesRepository({ client });

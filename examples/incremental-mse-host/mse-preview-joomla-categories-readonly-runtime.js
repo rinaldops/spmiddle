@@ -6,7 +6,7 @@
   var LIST_NAME = "mseCategories";
   var ROOT_SELECTOR = '[data-spmiddle-mse-root][data-spmiddle-instance="preview"]';
   var REGION_SELECTOR = "[data-spmiddle-categories-region]";
-  var FIELDS = ["Id", "Title", "Alias", "Extension", "Description", "ParentId", "Level", "Ordering", "Published"];
+  var FIELDS = ["Id", "Title", "Alias", "Extension", "Description", "Parent_category", "Level", "Ordering", "Published"];
 
   var root = document.querySelector(ROOT_SELECTOR);
   if (!root || root.dataset.joomlaCategoriesMounted === "true") return;
@@ -77,7 +77,7 @@
       alias: item.Alias || "",
       extension: item.Extension || "",
       description: item.Description || "",
-      parentId: item.ParentId == null ? null : item.ParentId,
+      parentId: item.Parent_category == null ? null : item.Parent_category,
       level: item.Level == null ? 0 : item.Level,
       ordering: item.Ordering == null ? 0 : item.Ordering,
       published: item.Published || ""
