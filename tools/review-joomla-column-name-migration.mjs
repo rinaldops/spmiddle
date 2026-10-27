@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 const TARGET_WEB = "/teams/camap-agp/db";
+const DELETE_POLICY = "exact-etag";
 const observed = {
   mseCategories: {
     itemCount: 0,
@@ -30,7 +31,7 @@ function actionsFor(list, definition) {
   return definition.fields.flatMap((field) => [
     { list, type: "create-field", target: field.newName, method: "POST", path: `${listRoot}/fields/createfieldasxml`, body: { parameters: { SchemaXml: schemaXml(field), Options: 0 } } },
     { list, type: "copy-field-values", target: `${field.oldName} → ${field.newName}`, method: "POST", path: `${listRoot}/items`, condition: `ItemCount > 0; copy ${field.oldName} to ${field.newName} per item using exact item ETag` },
-    { list, type: "delete-field", target: field.oldName, method: "DELETE", path: `${listRoot}/fields/getbyinternalnameortitle('${field.oldName}')`, etag: "required-at-apply" }
+    { list, type: "delete-field", target: field.oldName, method: "DELETE", path: `${listRoot}/fields/getbyinternalnameortitle('${field.oldName}')`, etag: "required-at-apply", allowWildcardEtag: false }
   ]);
 }
 const actions = Object.entries(observed).flatMap(([list, definition]) => actionsFor(list, definition));
@@ -39,16 +40,18 @@ function canonical(value) {
   if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(",")}}`;
   return JSON.stringify(value);
 }
-const fingerprint = createHash("sha256").update(canonical({ targetWeb: TARGET_WEB, observed, actions })).digest("hex");
+const fingerprint = createHash("sha256").update(canonical({ targetWeb: TARGET_WEB, deletePolicy: DELETE_POLICY, observed, actions })).digest("hex");
 console.log(JSON.stringify({
   mode: "local-column-name-migration-review",
   status: "ready-for-explicit-structural-confirmation",
   convention: "spaces become underscores; no x0020 encoding",
+  deletePolicy: DELETE_POLICY,
   targetWeb: TARGET_WEB,
   preconditions: Object.fromEntries(Object.entries(observed).map(([list, value]) => [list, { itemCount: value.itemCount, writes: 0 }])),
   actions,
   ordering: "create → copy values with exact item ETag → verify → delete legacy field → verify",
   rollback: "stop on failure; re-inspect; retain legacy field until copy verification succeeds",
+  wildcardOverride: "not authorized; requires separate explicit confirmation and a new fingerprint",
   fingerprint,
   apply: "not-run"
 }, null, 2));
