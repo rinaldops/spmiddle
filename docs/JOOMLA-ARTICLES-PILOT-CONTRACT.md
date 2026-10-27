@@ -1,6 +1,6 @@
 # Contrato do piloto de artigos — `mod_articles_latest`
 
-**Status:** schema estrutural provisionado e contrato REST read-only validado; nenhum registro, página ou asset foi alterado
+**Status:** piloto read-only aceito após validação estrutural e funcional; nenhum registro editorial permanente, página ou asset foi alterado
 **Lista candidata:** `mseContent`
 **Operação:** somente leitura
 
@@ -62,8 +62,6 @@ consumidor.
 - A validação autenticada read-only confirmou HTTP 200 para metadados, schema,
   consulta geral, filtro de publicados com janela de vigência e filtro por
   categoria. Todos retornaram conjunto vazio porque `ItemCount` permanece 0.
-- A validação com resultados editoriais reais permanece pendente até haver
-  autorização específica para inserir artigos de teste ou dados editoriais.
 - A validação funcional autorizada foi executada com quatro fixtures temporários:
   um publicado e elegível, um não publicado, um futuro e um expirado. As
   consultas REST retornaram somente o elegível, respeitaram categoria, janela,
@@ -277,4 +275,13 @@ Os testes devem comprovar:
 4. categoria opcional e limite aplicados;
 5. ordenação `Created desc`;
 6. seleção somente dos campos contratados;
-7. nenhuma operação de escrita pelo piloto.
+7. nenhuma operação editorial permanente pelo piloto; fixtures temporários,
+   quando autorizados, devem ser removidos e verificados.
+
+### Gate final de aceitação
+
+O gate final foi executado no subsite autorizado `/teams/camap-agp/db`.
+`mseContent` permaneceu com `ItemCount: 0`; os campos canônicos retornaram
+HTTP 200 e os fixtures temporários não existem mais. O endpoint `/indexes`
+continua indisponível no tenant (`HTTP 404`) e permanece documentado como
+limitação, sem impedir o contrato read-only validado.
