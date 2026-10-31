@@ -3,7 +3,7 @@ import {
   sanitizeRichText,
   validateContentLimits,
   validateSafeUrl
-} from "../../packages/sharepoint-rest-browser/src/index.js";
+} from "../../packages/sharepoint-rich-text/src/index.js";
 
 // Sanitized security cases for the Explore Mais link contract. This test does
 // not import mse-platform or access a browser, tenant, or external URL.

@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import * as app from "./app.js";
+import { defineListSchema } from "../../packages/sharepoint-schema/src/index.js";
+import { createProvisioningManager } from "../../packages/sharepoint-provisioning/src/index.js";
 import {
-  defineListSchema,
-  createDataSourceRegistry,
-  createProvisioningManager
+  createDataSourceRegistry
 } from "../../packages/sharepoint-rest-browser/src/index.js";
 
 // Importing the example is intentional: it is the executable integration

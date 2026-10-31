@@ -68,14 +68,14 @@ applications must build filters from trusted, allowlisted fields and values.
 
 ## Schemas and data sources
 
-The package also exposes local contracts for describing SharePoint structures and
-registering the sites and lists an application is allowed to use:
+Schema declarations now live in `@spmiddle/sharepoint-schema`; the REST package
+continues to own only the allowlisted site/list registry:
 
 ```js
 import {
-  createDataSourceRegistry,
-  defineListSchema
+  createDataSourceRegistry
 } from "@spmiddle/sharepoint-rest-browser";
+import { defineListSchema } from "@spmiddle/sharepoint-schema";
 
 const taskSchema = defineListSchema({
   key: "tasks",
@@ -103,10 +103,11 @@ const tasksFromRegistry = sources.getListClient("tasks");
 ```
 
 Schemas are immutable, environment-independent declarations. Defining one never
-creates or modifies SharePoint structures. Provisioning is intentionally a
-future administrative layer. The source registry accepts only allowlisted,
-server-relative sites and resolves runtime clients by logical key, not by an
-arbitrary URL. A source may describe only a site; in that case
+creates or modifies SharePoint structures. Administrative provisioning is
+provided separately by `@spmiddle/sharepoint-provisioning` and follows the
+explicit `inspect → apply → verify` flow. The source registry accepts only
+allowlisted, server-relative sites and resolves runtime clients by logical key,
+not by an arbitrary URL. A source may describe only a site; in that case
 `getListClient(key)` returns `undefined` until list metadata is registered.
 
 ## Repositories, mappers, and controlled queries
@@ -115,10 +116,7 @@ Repositories provide a domain-oriented API over a list client. They do not build
 arbitrary REST URLs and do not expose the raw SharePoint response envelope:
 
 ```js
-import {
-  createMapper,
-  createRepository
-} from "@spmiddle/sharepoint-rest-browser";
+import { createMapper, createRepository } from "@spmiddle/data-core";
 
 const mapper = createMapper({
   mapping: {
@@ -161,16 +159,18 @@ SharePoint internal names.
 
 ## Segurança, conteúdo rico e arquivos
 
-O pacote também exporta guardrails locais para conteúdo recebido pela aplicação:
+The independent `@spmiddle/sharepoint-rich-text` and
+`@spmiddle/sharepoint-files` packages provide guardrails for content received
+by the application:
 
 ```js
 import {
   sanitizeRichText,
   validateSafeUrl,
   validateContentLimits,
-  createSafeLogger,
-  createSharePointFileClient
-} from "@spmiddle/sharepoint-rest-browser";
+  createSafeLogger
+} from "@spmiddle/sharepoint-rich-text";
+import { createSharePointFileClient } from "@spmiddle/sharepoint-files";
 
 const safeHtml = sanitizeRichText(untrustedHtml);
 if (!validateSafeUrl(link, { allowRelative: true })) {
@@ -189,15 +189,17 @@ const files = createSharePointFileClient({
 });
 ```
 
-`validateFileInput` rejeita traversal, caminhos absolutos, URLs, conteúdo com
-aparência de Base64, limites excedidos e tipos/extensões fora da allowlist.
+`validateFileInput` (from `@spmiddle/sharepoint-files`) rejects traversal,
+absolute paths, URLs, Base64-looking content, exceeded limits, and types or
+extensions outside the allowlist.
 Uploads não são repetidos automaticamente. As operações de arquivo usam um
 transporte injetado e caminhos REST server-relative explícitos.
 
-`sanitizeRichText` é um filtro conservador sem DOM; não é um parser HTML nem
-substitui CSP, Trusted Types, validação no servidor ou uma biblioteca de
-sanitização revisada. O middleware não simula permissões SharePoint. O logger
-seguro redige tokens, cookies, credenciais, digests e campos de autorização.
+`sanitizeRichText` is a conservative DOM-free filter; it is not an HTML parser
+and does not replace CSP, Trusted Types, server-side validation, or a reviewed
+sanitization library. The middleware does not simulate SharePoint permissions.
+The safe logger redacts tokens, cookies, credentials, digests, and authorization
+fields.
 
 ## Creating a client
 

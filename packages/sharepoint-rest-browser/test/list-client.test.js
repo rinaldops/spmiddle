@@ -1,24 +1,15 @@
 import assert from "node:assert/strict";
 import { createSharePointListClient } from "../src/list-client.js";
+import { createQueueTransport } from "../../sharepoint-testing/src/index.js";
 
 const tests = [];
 function test(name, fn) { tests.push({ name, fn }); }
 
-function fakeTransport(responses = []) {
-  const calls = [];
-  return {
-    calls,
-    webUrl: site,
-    request: async (path, options = {}) => {
-      calls.push({ path, options });
-      const response = responses.shift();
-      if (typeof response === "function") return response(path, options);
-      return response ?? { data: null, status: 204, etag: null };
-    }
-  };
-}
-
 const site = "/sites/demo";
+
+function fakeTransport(responses = []) {
+  return createQueueTransport(responses, { webUrl: site });
+}
 const listPath = `${site}/_api/web/lists/getbytitle('Tasks')/items`;
 
 test("constructs list and item URLs and serializes select/expand/filter/orderby/top", async () => {

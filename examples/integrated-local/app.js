@@ -5,12 +5,11 @@
  * network, tenant URL, credential, or real business data is required.
  */
 import { fileURLToPath } from "node:url";
+import { defineListSchema } from "../../packages/sharepoint-schema/src/index.js";
+import { createProvisioningManager } from "../../packages/sharepoint-provisioning/src/index.js";
+import { createMapper, createRepository } from "../../packages/data-core/src/index.js";
 import {
-  defineListSchema,
-  createMapper,
-  createDataSourceRegistry,
-  createProvisioningManager,
-  createRepository
+  createDataSourceRegistry
 } from "../../packages/sharepoint-rest-browser/src/index.js";
 
 const site = "/sites/example";

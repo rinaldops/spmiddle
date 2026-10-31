@@ -1,31 +1,9 @@
 import assert from "node:assert/strict";
+import { FakeHeaders, fakeResponse } from "../../../sharepoint-testing/src/index.js";
 
-/**
- * Small Fetch-compatible test doubles. They are exported so adapter tests can
- * reuse the contract without bringing in a test or HTTP dependency.
- */
-export class FakeHeaders {
-  constructor(values = {}) {
-    this.values = new Map(
-      Object.entries(values).map(([name, value]) => [name.toLowerCase(), String(value)])
-    );
-  }
-
-  get(name) {
-    return this.values.get(String(name).toLowerCase()) ?? null;
-  }
-}
-
-export function fakeResponse(status, body = "", headers = {}, binaryBody) {
-  const bytes = binaryBody ?? new TextEncoder().encode(body).buffer;
-  return {
-    status,
-    ok: status >= 200 && status < 300,
-    headers: new FakeHeaders(headers),
-    text: async () => body,
-    arrayBuffer: async () => bytes
-  };
-}
+// Re-exported so adapter tests can keep reusing the contract's doubles
+// without bringing in a test or HTTP dependency of their own.
+export { FakeHeaders, fakeResponse };
 
 function test(name, fn) {
   return { name, fn };

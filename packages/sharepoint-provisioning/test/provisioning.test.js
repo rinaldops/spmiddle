@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { defineListSchema } from "../src/schema.js";
+import { defineListSchema } from "../../sharepoint-schema/src/schema.js";
 import { createProvisioningManager } from "../src/provisioning.js";
+import { createListProvisioningFake } from "../../sharepoint-testing/src/index.js";
 
 const site = "/sites/demo";
 const schema = defineListSchema({
@@ -24,59 +25,7 @@ function fieldPath(title = schema.displayName) {
 }
 
 function fakeTransport({ list = null, fields = [] } = {}) {
-  const state = { list, fields: fields.map((field) => ({ ...field })) };
-  const calls = [];
-  const transport = {
-    webUrl: site,
-    calls,
-    state,
-    async request(path, options = {}) {
-      calls.push({ path, options });
-      const method = (options.method ?? "GET").toUpperCase();
-
-      if (method === "GET" && path.startsWith(fieldPath())) {
-        return { data: { value: state.fields }, status: 200 };
-      }
-      if (method === "GET" && (path === listPath() || path.startsWith(`${listPath()}?$select=`))) {
-        if (!state.list) {
-          const error = new Error("not found");
-          error.code = "not-found";
-          error.status = 404;
-          throw error;
-        }
-        return { data: state.list, status: 200 };
-      }
-      if (method === "GET" && path.endsWith("/indexes")) {
-        const error = new Error("not found");
-        error.code = "not-found";
-        error.status = 404;
-        throw error;
-      }
-      if (method === "POST" && path === `${site}/_api/web/lists`) {
-        const body = options.body ?? {};
-        state.list = {
-          Id: "00000000-0000-4000-8000-000000000001",
-          Title: body.Title ?? schema.displayName,
-          BaseTemplate: body.BaseTemplate ?? body.TemplateType ?? schema.template
-        };
-        return { data: state.list, status: 201 };
-      }
-      if (method === "POST" && path === fieldPath()) {
-        const body = options.body ?? {};
-        const field = {
-          InternalName: body.InternalName ?? body.Name,
-          Title: body.Title ?? body.DisplayName ?? body.InternalName ?? body.Name,
-          TypeAsString: body.TypeAsString ?? body.Type ?? ({ 2: "Text", 3: "MultilineText", 4: "DateTime", 6: "Choice", 7: "Lookup", 8: "Boolean", 9: "Number", 10: "Currency", 11: "URL", 20: "User" }[body.FieldTypeKind] ?? "Text"),
-          Required: body.Required === true
-        };
-        if (body.Choices) field.Choices = body.Choices.results ?? body.Choices;
-        state.fields.push(field);
-        return { data: field, status: 201 };
-      }
-      throw new Error(`Unexpected request: ${method} ${path}`);
-    }
-  };
-  return transport;
+  return createListProvisioningFake({ webUrl: site, listTitle: schema.displayName, list, fields });
 }
 
 function planText(value) {

@@ -5,14 +5,10 @@
  * dependency on mse-platform.  The host supplies a source configuration and a
  * SPMIDDLE-compatible transport through transportFactory (or client).
  */
-import {
-  defineListSchema,
-  createMapper,
-  createRepository,
-  createDataSourceRegistry,
-  sanitizeRichText,
-  validateSafeUrl
-} from "../../packages/sharepoint-rest-browser/src/index.js";
+import { defineListSchema } from "../../packages/sharepoint-schema/src/index.js";
+import { createMapper, createRepository } from "../../packages/data-core/src/index.js";
+import { createDataSourceRegistry } from "../../packages/sharepoint-rest-browser/src/index.js";
+import { sanitizeRichText, validateSafeUrl } from "../../packages/sharepoint-rich-text/src/index.js";
 
 const SOURCE_KEY = "recursos-links";
 const MAX_ITEMS = 500;

@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm --prefix packages/sharepoint-rest-browser test && node examples/integrated-local/integration.test.js && node examples/first-consumer-recursos/adapter.test.js && node examples/first-consumer-recursos/parity.test.js && node examples/first-consumer-recursos/schema-parity.test.js && node examples/first-consumer-recursos/security-parity.test.js && node examples/standalone-host/host.test.js && node examples/react-compatible-host/host.test.js && node examples/spfx-compatible-host/host.test.js && node examples/incremental-mse-host/host.test.js && node examples/incremental-mse-host/dry-run.test.js && node examples/incremental-mse-host/camap-runtime.test.js"
+    "test": "npm --prefix packages/sharepoint-testing test && npm --prefix packages/sharepoint-schema test && npm --prefix packages/sharepoint-provisioning test && npm --prefix packages/data-core test && npm --prefix packages/sharepoint-files test && npm --prefix packages/sharepoint-rich-text test && npm --prefix packages/sharepoint-rest-browser test && node examples/integrated-local/integration.test.js && node examples/first-consumer-recursos/adapter.test.js && node examples/first-consumer-recursos/parity.test.js && node examples/first-consumer-recursos/schema-parity.test.js && node examples/first-consumer-recursos/security-parity.test.js && node examples/standalone-host/host.test.js && node examples/react-compatible-host/host.test.js && node examples/spfx-compatible-host/host.test.js && node examples/incremental-mse-host/host.test.js && node examples/incremental-mse-host/dry-run.test.js && node examples/incremental-mse-host/camap-runtime.test.js"
   },
   "engines": {
     "node": ">=20"

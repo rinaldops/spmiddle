@@ -8,7 +8,12 @@
 ### Estado atual do planejamento — outubro de 2026
 
 - a fundação REST/domínio, repositories, schemas, provisioning, segurança e
-  paginação está implementada e coberta pela suíte local;
+  paginação está implementada e coberta pela suíte local, agora dividida
+  em pacotes especializados (`sharepoint-rest-browser`, `sharepoint-schema`,
+  `sharepoint-provisioning`, `data-core`, `sharepoint-files`,
+  `sharepoint-rich-text`, `sharepoint-testing`) conforme a estrutura da
+  seção 15 — sem `npm workspaces`, por não haver necessidade comprovada
+  (ver `docs/ARCHITECTURE.md`);
 - o host CAMAP somente leitura foi validado na `Preview.aspx`, sem reload ou
   navegação interna;
 - o Explore Mais foi encerrado como candidato do site CAMAP e não deve ser
@@ -323,10 +328,10 @@ A extração deverá ser incremental:
 
 Não substituir todo o `core` em uma única alteração.
 
-Os critérios de entrada, gates, piloto, aceite e rollback estão detalhados em
-[`docs/INTEGRATION-MSE-PLATFORM.md`](docs/INTEGRATION-MSE-PLATFORM.md). O
-documento é apenas planejamento e não autoriza alterações no `mse-platform` ou
-acesso a um tenant real.
+Qualquer integração futura com um consumidor externo exige critérios de entrada,
+gates, aceite, rollback e autorização operacional próprios. O SPMIDDLE não
+autoriza alterações em consumidores nem acesso a tenant real por sua própria
+documentação.
 
 ---
 
@@ -737,6 +742,16 @@ web-devs/SPMIDDLE/
     ├── release/
     └── verify/
 ```
+
+A árvore `packages/` e os documentos `docs/ARCHITECTURE.md`,
+`docs/SCHEMA-CONTRACT.md`, `docs/QUERY-CONTRACT.md`, `docs/ERROR-CATALOG.md`,
+`docs/LIMITS.md` e `docs/adr/` listados acima já estão implementados (outubro
+de 2026), sem `npm workspaces` — ver justificativa em
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). A estrutura de `examples/`,
+`tests/` e `tools/` acima permanece como referência de destino; os exemplos
+reais hoje vivem em `examples/<nome-do-host>/` (não em `examples/vanilla-js`,
+`mse-host` ou `react` como mostrado acima) e cada pacote mantém seus próprios
+testes em `packages/<pacote>/test/`.
 
 Durante a primeira implementação, essa estrutura poderá começar menor. Não
 criar pacotes vazios ou abstrações sem consumidor real.

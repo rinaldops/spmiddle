@@ -1,22 +1,9 @@
 import assert from "node:assert/strict";
 import { createSharePointRestClient, SharePointRestError } from "../src/index.js";
+import { fakeResponse as response } from "../../sharepoint-testing/src/index.js";
 
 const tests = [];
 function test(name, fn) { tests.push({ name, fn }); }
-
-class FakeHeaders {
-  constructor(values = {}) {
-    this.values = new Map(Object.entries(values).map(([key, value]) => [key.toLowerCase(), String(value)]));
-  }
-
-  get(name) {
-    return this.values.get(name.toLowerCase()) ?? null;
-  }
-}
-
-function response(status, body = "", headers = {}) {
-  return { status, ok: status >= 200 && status < 300, headers: new FakeHeaders(headers), text: async () => body, arrayBuffer: async () => new TextEncoder().encode(body).buffer };
-}
 
 test("validates server-relative webUrl", () => {
   assert.throws(() => createSharePointRestClient({ webUrl: "https://example.test" }), TypeError);
