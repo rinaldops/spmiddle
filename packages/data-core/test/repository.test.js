@@ -141,6 +141,27 @@ test("findMany controls the query, maps pages, and returns cursor metadata", asy
   assert.equal(client.calls[1].query.nextLink, next);
 });
 
+test("findMany attaches a per-item ETag from the body (odata.etag), not just a response-level header", async () => {
+  // Regression test for a real bug found against a live tenant: callers
+  // locating a record by filter (e.g. by a business key, not a numeric Id)
+  // got etag === null for every item returned by findMany, which then made
+  // every subsequent update()/delete() fail with "ETag exata é obrigatória"
+  // even though the record genuinely existed.
+  const client = makeClient([
+    { data: { value: [
+      { Id: 1, Title: "One", "odata.etag": '"3"' },
+      { Id: 2, Title: "Two", "@odata.etag": '"5"' },
+    ] }, status: 200 }
+  ]);
+  const repository = createRepository({ source: "articles", mapper: createMapper({ mapping }), client });
+  const result = await repository.findMany({ filter: { field: "title", operator: "eq", value: "One" } });
+  assert.equal(result.items[0].etag, '"3"');
+  // "@odata.etag" (full OData v4 metadata) is kept as a fallback shape.
+  assert.equal(result.items[1].etag, '"5"');
+  // Items stay frozen, matching findById's existing immutability guarantee.
+  assert.throws(() => { result.items[0].id = 99; });
+});
+
 test("findMany detects repeated cursors and supports explicit page limits", async () => {
   const repeated = "/sites/demo/_api/web/lists(1)/items?$skiptoken=repeat";
   const loopClient = makeClient([

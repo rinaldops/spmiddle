@@ -15,7 +15,10 @@ test("GET sends Accept and parses JSON; empty response is null", async () => {
   const client = createSharePointRestClient({ webUrl: "/sites/app", fetchImpl: async (url, options) => { calls.push({ url, options }); return response(200, ""); } });
   assert.equal((await client.request("/_api/web" )).data, null);
   assert.equal(calls[0].url, "/sites/app/_api/web");
-  assert.equal(calls[0].options.headers.Accept, "application/json;odata=nometadata");
+  // Reads use minimalmetadata, not nometadata: the classic SharePoint REST
+  // API only returns a per-item ETag for filtered collection responses when
+  // the body carries OData metadata (confirmed against a real tenant).
+  assert.equal(calls[0].options.headers.Accept, "application/json;odata=minimalmetadata");
 });
 
 test("digest is cached and writes use exact If-Match", async () => {
@@ -61,6 +64,26 @@ test("supports binary responses and wildcard only when explicitly enabled", asyn
   assert.equal(new TextDecoder().decode(result.data), "abc");
   await client.request("/_api/file", { method: "DELETE", etag: "*", allowWildcardEtag: true });
   assert.equal(last.headers["If-Match"], "*");
+});
+
+test("extracts a per-item ETag from a filtered collection body (odata.etag), not just a response header", async () => {
+  // Regression test for a real bug found against a live tenant: with
+  // nometadata, items(id) single-item GETs get an ETag HTTP header, but
+  // items?$filter=... collection GETs get neither a header nor a body
+  // field, leaving every item's etag null. minimalmetadata restores a
+  // per-item "odata.etag" in the body for both shapes.
+  const client = createSharePointRestClient({
+    webUrl: "/sites/app",
+    fetchImpl: async () => response(200, JSON.stringify({
+      value: [{ Id: 69, Title: "A", "odata.etag": '"1"' }]
+    }))
+  });
+  const result = await client.request("/_api/web/lists/getbytitle('X')/items?$filter=Id eq 69");
+  assert.equal(result.data.value[0]["odata.etag"], '"1"');
+  // The response-level etag stays null for a collection (there is no single
+  // HTTP ETag header for a list of items); callers read the per-item field
+  // themselves (as data-core's repository.findMany now does).
+  assert.equal(result.etag, null);
 });
 
 for (const { name, fn } of tests) {

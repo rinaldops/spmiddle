@@ -249,8 +249,15 @@ written as `/_api/...` or as the full same-origin URL for that site. Arbitrary
 cross-origin URLs are rejected. The default `Accept` header is:
 
 ```text
-application/json;odata=nometadata
+application/json;odata=minimalmetadata
 ```
+
+This is deliberately *not* `nometadata`: the classic SharePoint REST API only
+returns a per-item ETag for a filtered *collection* response
+(`items?$filter=...`) when the body carries OData metadata, as each item's
+`odata.etag`. Under `nometadata`, collection items have no ETag at all (not
+even in a response header), while a single-item GET (`items(id)`) still gets
+an `ETag` HTTP header either way. Confirmed against a real tenant.
 
 Supported options are:
 
@@ -288,7 +295,8 @@ GET. A successful request resolves to a frozen object:
 ```
 
 The `etag` value is read first from the HTTP `ETag` header, then from
-`@odata.etag` or `__metadata.etag` in the response body. A `204` response, or
+`odata.etag` (classic SharePoint shape, no `@`), `@odata.etag` (OData v4), or
+`__metadata.etag` (`odata=verbose`) in the response body. A `204` response, or
 any successful response with an empty body, has `data: null`.
 
 ## Request digest

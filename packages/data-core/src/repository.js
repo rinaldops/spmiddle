@@ -27,6 +27,10 @@ function nextLink(response) {
   return data?.["@odata.nextLink"] ?? data?.["odata.nextLink"] ?? data?.d?.__next ?? null;
 }
 
+function itemEtag(rawItem) {
+  return rawItem?.["odata.etag"] ?? rawItem?.["@odata.etag"] ?? rawItem?.__metadata?.etag ?? null;
+}
+
 function result(item, response) {
   if (item === null || item === undefined) return item;
   Object.defineProperties(item, {
@@ -126,7 +130,12 @@ export function createRepository({ source, schema, mapper, client } = {}) {
     const seenLinks = new Set();
     for (let pageNumber = 0; pageNumber < maxPages && items.length < maxItems; pageNumber += 1) {
       response = await clientValue.getListItems(link ? { nextLink: link } : normalized);
-      const pageItems = responseItems(response).map((item) => mapperValue.mapItem(item));
+      // Each item in a filtered collection carries its own ETag in the body
+      // (not in the response-level header, which only exists for single-item
+      // GETs) - attach it per item the same way findById attaches the
+      // response-level ETag, so callers can update/delete items found via
+      // findMany without a redundant findById round trip.
+      const pageItems = responseItems(response).map((rawItem) => result(mapperValue.mapItem(rawItem), { etag: itemEtag(rawItem) }));
       items.push(...pageItems.slice(0, Math.max(0, maxItems - items.length)));
       link = nextLink(response);
       if (!link) break;

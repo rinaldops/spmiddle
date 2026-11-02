@@ -39,7 +39,11 @@ export async function runSharePointRestContract(factory, { report = () => {} } =
       assert.equal((await client.request("/_api/web")).data, null);
       assert.equal(calls[0].url, "/sites/app/_api/web");
       assert.equal(calls[0].options.method, "GET");
-      assert.equal(calls[0].options.headers.Accept, "application/json;odata=nometadata");
+      // Reads use minimalmetadata, not nometadata: the classic SharePoint
+      // REST API only returns a per-item ETag for filtered collection
+      // responses when the body carries OData metadata, confirmed against a
+      // real tenant.
+      assert.equal(calls[0].options.headers.Accept, "application/json;odata=minimalmetadata");
     }),
 
     test("caches the digest and sends MERGE/DELETE as POST overrides with exact ETag", async () => {
@@ -185,6 +189,20 @@ export async function runSharePointRestContract(factory, { report = () => {} } =
       });
       const result = await etagClient.request("/_api/web/lists(1)");
       assert.equal(result.etag, '"7"');
+
+      // Real classic SharePoint minimalmetadata responses use "odata.etag"
+      // (no "@" prefix), confirmed against a real tenant; this must be
+      // preferred, with "@odata.etag" and "__metadata.etag" kept as
+      // fallbacks for other metadata shapes.
+      const minimalMetadataClient = factory({
+        webUrl: "/sites/app",
+        fetchImpl: async () => fakeResponse(200, JSON.stringify({
+          Id: 1,
+          "odata.etag": '"9"'
+        }))
+      });
+      const minimalResult = await minimalMetadataClient.request("/_api/web/lists(1)");
+      assert.equal(minimalResult.etag, '"9"');
     }),
 
     test("returns binary responses", async () => {

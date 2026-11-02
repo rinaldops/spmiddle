@@ -1,4 +1,13 @@
 const DEFAULT_ACCEPT = "application/json;odata=nometadata";
+// Read requests use minimalmetadata, not nometadata: the classic SharePoint
+// REST API (confirmed against a real tenant) only returns a per-item ETag
+// for filtered *collection* responses (items?$filter=...) when the body
+// carries OData metadata (as "odata.etag" on each item). nometadata omits it
+// both from the response body and, for collections, from the HTTP ETag
+// header too (only a single-item GET such as items(id) gets a header ETag
+// under nometadata). Write bodies keep using DEFAULT_ACCEPT as their
+// Content-Type, unchanged: this only affects what the server returns on GET.
+const DEFAULT_READ_ACCEPT = "application/json;odata=minimalmetadata";
 const METHODS = new Set(["GET", "POST", "MERGE", "DELETE"]);
 
 export class SharePointRestError extends Error {
@@ -145,7 +154,7 @@ export function createSharePointRestClient({
       (typeof etag !== "string" || !etag.trim() || (etag.trim() === "*" && !allowWildcardEtag))) {
       throw new SharePointRestError("etag-required", "A ETag exata é obrigatória para alterar ou excluir.", { path: url });
     }
-    const requestHeaders = { Accept: DEFAULT_ACCEPT, ...headers };
+    const requestHeaders = { Accept: DEFAULT_READ_ACCEPT, ...headers };
     let transportMethod = requestedMethod;
     if (write) {
       requestHeaders["X-RequestDigest"] = await getDigest();
@@ -165,7 +174,12 @@ export function createSharePointRestClient({
     let data;
     try { data = await responseBody(response, responseType); }
     catch (error) { error.path ??= url; throw error; }
-    return Object.freeze({ data, etag: header(response, "ETag") || data?.["@odata.etag"] || data?.__metadata?.etag || null, status: response.status });
+    // Real classic SharePoint REST minimalmetadata responses carry the
+    // per-item ETag as body["odata.etag"] (no "@" prefix) - confirmed
+    // against a real tenant, for both single-item and filtered-collection
+    // item shapes. "@odata.etag" and "__metadata.etag" are kept as
+    // fallbacks for other metadata levels/shapes a caller might request.
+    return Object.freeze({ data, etag: header(response, "ETag") || data?.["odata.etag"] || data?.["@odata.etag"] || data?.__metadata?.etag || null, status: response.status });
   }
 
   return Object.freeze({ webUrl: site, request, getDigest });

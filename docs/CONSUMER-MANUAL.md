@@ -179,7 +179,8 @@ Métodos: `GET`, `POST`, `MERGE` e `DELETE`. O caminho deve permanecer no
 
 `responseType` pode ser `json` ou `binary`. Resposta `204` ou corpo vazio
 resulta em `data: null`. A ETag vem do header `ETag`, depois de
-`@odata.etag` ou `__metadata.etag`.
+`odata.etag` (SharePoint classic, sem `@`), `@odata.etag` (OData v4) ou
+`__metadata.etag` (`odata=verbose`).
 
 Objetos no `body` são serializados como JSON. Conteúdo binário usa
 `application/octet-stream` por padrão.
@@ -308,7 +309,11 @@ await repo.delete(7, { etag: updated.etag });
 
 `findMany` retorna `{ items, page, nextLink, hasNextPage, pageSize }`.
 Entidades são congeladas e a ETag fica em propriedade não enumerável
-`entity.etag`. `findMany` e `count` limitam a 100 páginas e 10.000 itens por
+`entity.etag` — **em `findMany`, isso depende do transporte devolver
+`odata=minimalmetadata` (o padrão desde a correção do bug de ETag ausente em
+coleções; veja §12)**, já que o SharePoint classic só inclui a ETag por item
+no corpo de uma coleção filtrada sob esse nível de metadata, nunca no cabeçalho
+HTTP. `findMany` e `count` limitam a 100 páginas e 10.000 itens por
 default; cursor repetido produz `code: "pagination-loop"`.
 
 ## 9. Queries controladas
@@ -464,3 +469,47 @@ confirmação e verificação. Não chame tenant real na suíte local.
 Não assuma que schema provisiona automaticamente, que ETag é serializada no
 JSON, que `nextLink` pode sair da source, que `If-Match: *` é seguro, ou que o
 frontend substitui permissões SharePoint.
+
+## 16. Correção de contrato: ETag ausente em coleções (ação exigida do consumidor)
+
+Um bug real foi confirmado contra um tenant real: com o `Accept` de leitura
+anterior (`application/json;odata=nometadata`), o SharePoint classic REST
+nunca devolve a ETag de um item obtido via **coleção filtrada**
+(`items?$filter=...`, usada por `findMany`) — nem no header `ETag`, nem no
+corpo. Só um GET de **item único** (`items(id)`) trazia a ETag, no header.
+Qualquer repositório que localiza um registro por um campo de negócio (não
+pelo Id numérico) para depois `update`/`delete` ficava com `item.etag ===
+null`, e a escrita subsequente falhava sempre com `etag-required` — em todo
+tenant real, não só em casos extremos.
+
+**Correção aplicada nesta versão (não retroativa, exige ação do consumidor):**
+
+- O `Accept` de leitura passou de `nometadata` para `minimalmetadata`
+  (`DEFAULT_READ_ACCEPT`). O `Content-Type` de escrita **não mudou** e
+  continua `nometadata`.
+- `request()` agora lê a ETag também de `data["odata.etag"]` (chave real do
+  SharePoint classic, sem `@`), antes dos fallbacks já existentes
+  (`@odata.etag`, `__metadata.etag`).
+- `createRepository(...).findMany(...)` agora anexa `item.etag` por item
+  (igual a `findById`), lendo o mesmo `odata.etag`/`@odata.etag` do corpo de
+  cada item da coleção.
+
+**Se sua integração consome `@spmiddle/sharepoint-rest-browser` e/ou
+`@spmiddle/data-core` diretamente** (não apenas via outro pacote do
+monorepo):
+
+1. Atualize para esta versão dos dois pacotes juntos — eles mudaram em
+   conjunto; atualizar só um deixa o outro com a correção incompleta.
+2. Se você tem testes com fakes/mocks de `fetchImpl` ou `client` que afirmam
+   explicitamente `Accept === "application/json;odata=nometadata"` para
+   leitura, atualize-os para `"application/json;odata=minimalmetadata"`.
+3. Se você tem qualquer lógica própria (fora destes pacotes) que lê ETag
+   manualmente do corpo de uma resposta do SharePoint, prefira
+   `data["odata.etag"]` a `data["@odata.etag"]` quando usar `minimalmetadata`
+   — o SharePoint classic retorna a primeira forma, não a segunda.
+4. Revalide qualquer fluxo real de `update`/`delete` que localiza o registro
+   via `findMany`/filtro (não via `findById`/Id numérico) — esse era
+   exatamente o caminho que falhava.
+5. Nenhuma mudança é necessária em código que só usa `findById`, `create`,
+   `update` ou `delete` isoladamente, ou que já tratava `item.etag` como
+   opaco (sem supor seu formato interno).
