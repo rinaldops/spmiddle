@@ -51,7 +51,13 @@ function condition(value, contract) {
   if (value.value === undefined) throw new TypeError("filter.value deve ser informado.");
   if (op === "contains" || op === "beginsWith") {
     if (typeof value.value !== "string") throw new TypeError(`${op} exige um valor texto.`);
-    return `${op}(${name},${literal(value.value)})`;
+    // The classic SharePoint REST API (_api/web/lists/.../items) only
+    // understands OData v3 string functions. `contains(Campo,'valor')` and
+    // `startswith(Campo,'valor')` are OData v4 syntax and fail with HTTP 400
+    // ("The function operator '...' is not supported or its usage is
+    // invalid."), confirmed by direct inspection against a real tenant.
+    if (op === "contains") return `substringof(${literal(value.value)},${name})`;
+    return `startswith(${name},${literal(value.value)})`;
   }
   if (value.value === null && !["eq", "ne"].includes(op)) throw new TypeError(`${op} não aceita null.`);
   return `${name} ${op} ${literal(value.value)}`;

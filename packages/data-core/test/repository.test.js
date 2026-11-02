@@ -85,6 +85,29 @@ test("rejects unknown fields and unsafe query operators", () => {
   assert.throws(() => normalizeQuery({ filter: { field: "title", operator: "raw", value: "x" } }, mapper), /suportado/i);
 });
 
+test("contains/beginsWith generate OData v3 string functions compatible with the classic SharePoint REST API", () => {
+  const mapper = createMapper({ mapping });
+  // The classic _api/web/lists/.../items endpoint rejects OData v4 syntax
+  // (contains(Campo,'valor')) with HTTP 400; it only understands OData v3
+  // string functions (substringof/startswith), confirmed against a real
+  // tenant. Regression test for that real failure.
+  assert.deepEqual(
+    normalizeQuery({ filter: { field: "title", operator: "contains", value: "Marlim" } }, mapper),
+    { filter: "substringof('Marlim',Title)" }
+  );
+  assert.deepEqual(
+    normalizeQuery({ filter: { field: "title", operator: "beginsWith", value: "Marlim" } }, mapper),
+    { filter: "startswith(Title,'Marlim')" }
+  );
+  assert.deepEqual(
+    normalizeQuery({ filter: { or: [
+      { field: "title", operator: "contains", value: "a" },
+      { field: "status", operator: "contains", value: "b" },
+    ] } }, mapper),
+    { filter: "(substringof('a',Title)) or (substringof('b',Status))" }
+  );
+});
+
 test("findById maps the item and forwards query options", async () => {
   const client = makeClient();
   const repository = createRepository({ source: "articles", mapper: createMapper({ mapping }), client });
