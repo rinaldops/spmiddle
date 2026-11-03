@@ -7,6 +7,16 @@ with a `.code` property, not `SharePointRestError`. Treat all codes below,
 transport or not, as stable and machine-readable; do not depend on the
 human-readable `message`.
 
+## Compatibility corrections in the current baseline
+
+- Controlled string filters target the classic SharePoint REST OData dialect:
+  `contains` becomes `substringof(value,field)` and `beginsWith` becomes
+  `startswith(field,value)`. OData v4 `contains(field,value)` is not emitted
+  because the classic endpoint rejects it.
+- Collection items may expose their ETag as `odata.etag` in the response body.
+  Consumers should use the entity's non-enumerable `etag` supplied by the
+  repository rather than assuming a collection has a response-level HTTP ETag.
+
 ## Transport codes (`sharepoint-rest-browser`, class `SharePointRestError`)
 
 See `docs/API.md` for the full table. Summary:

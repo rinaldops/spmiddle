@@ -13,8 +13,9 @@ implemented in `packages/data-core/src/query.js`
 eq, ne, gt, ge, lt, le, contains, beginsWith
 ```
 
-- `contains` and `beginsWith` require a string `value` and are serialized as
-  `contains(field,'value')` / `beginsWith(field,'value')`.
+- `contains` and `beginsWith` require a string `value` and are serialized using
+  the OData v3 functions understood by the classic SharePoint REST API:
+  `substringof('value',field)` / `startswith(field,'value')`.
 - `null` is only accepted with `eq`/`ne`.
 - Any other operator throws `TypeError`.
 
@@ -60,7 +61,8 @@ for callers that prefer that name.
 ## REST serialization
 
 `list-client.js` turns a normalized query into SharePoint REST query-string
-parameters:
+parameters. The normalized `filter` string is already in the OData v3 dialect
+expected by the classic SharePoint REST endpoint:
 
 - `select`/`expand` arrays are joined with commas into `$select`/`$expand`.
 - `filter` (already an OData string by the time it reaches the list client)
@@ -70,6 +72,11 @@ parameters:
 - `top` must be a non-negative integer; becomes `$top`.
 - Every value is `encodeURIComponent`-escaped before being joined into the
   query string.
+
+Do not replace `substringof`/`startswith` with the superficially similar OData
+v4 `contains` syntax when targeting the classic endpoint. The former is the
+implemented compatibility contract for `contains`; the latter is the
+implemented contract for `beginsWith`.
 
 ## Cursor-based pagination
 

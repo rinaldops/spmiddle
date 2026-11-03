@@ -311,7 +311,7 @@ await repo.delete(7, { etag: updated.etag });
 Entidades são congeladas e a ETag fica em propriedade não enumerável
 `entity.etag` — **em `findMany`, isso depende do transporte devolver
 `odata=minimalmetadata` (o padrão desde a correção do bug de ETag ausente em
-coleções; veja §12)**, já que o SharePoint classic só inclui a ETag por item
+coleções; veja §16)**, já que o SharePoint classic só inclui a ETag por item
 no corpo de uma coleção filtrada sob esse nível de metadata, nunca no cabeçalho
 HTTP. `findMany` e `count` limitam a 100 páginas e 10.000 itens por
 default; cursor repetido produz `code: "pagination-loop"`.
@@ -337,7 +337,10 @@ Operadores: `eq`, `ne`, `gt`, `ge`, `lt`, `le`, `contains` e `beginsWith`.
 compostos usam `and`/`or` com arrays não vazios. Opções de topo são apenas
 `select`, `filter`, `orderBy`, `pageSize` e `top`; os dois últimos, se usados
 juntos, devem ser iguais. Campos são resolvidos pelo mapper e valores são
-escapados para OData. Detalhes estão em [`QUERY-CONTRACT.md`](QUERY-CONTRACT.md).
+escapados para OData. Para o SharePoint REST clássico, `contains` é emitido
+como `substringof('valor',Campo)` e `beginsWith` como
+`startswith(Campo,'valor')`; não use a sintaxe OData v4 equivalente. Detalhes
+estão em [`QUERY-CONTRACT.md`](QUERY-CONTRACT.md).
 
 ## 10. Arquivos
 
