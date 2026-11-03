@@ -113,6 +113,20 @@ export function createListProvisioningFake({ webUrl = "/sites/demo", listTitle, 
       }
       if (method === "POST" && path === fieldPath()) {
         const body = options.body ?? {};
+        // Mirrors a real SharePoint REST constraint confirmed against a live
+        // tenant: a Choices payload is only accepted under the concrete
+        // SP.FieldChoice OData type; the generic SP.Field metadata type
+        // rejects it with HTTP 400 ("The property 'Choices' does not exist
+        // on type 'SP.Field'"). This fake previously accepted Choices under
+        // any __metadata.type, which let a real bug in
+        // sharepoint-provisioning's missingFieldAction go undetected even
+        // though this very test file already exercises a Choice field.
+        if (body.Choices && body.__metadata?.type !== "SP.FieldChoice") {
+          const error = new Error(`The property 'Choices' does not exist on type '${body.__metadata?.type ?? "SP.Field"}'. Make sure to only use property names that are defined by the type.`);
+          error.code = "-1, Microsoft.SharePoint.Client.InvalidClientQueryException";
+          error.status = 400;
+          throw error;
+        }
         const field = {
           InternalName: body.InternalName ?? body.Name,
           Title: body.Title ?? body.DisplayName ?? body.InternalName ?? body.Name,

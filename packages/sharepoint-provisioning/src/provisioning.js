@@ -46,14 +46,21 @@ function sameIndex(index, expected) {
 
 function missingFieldAction(root, field) {
   const typeName = Object.keys(FIELD_TYPES).find((name) => name.toLowerCase() === String(field.type).toLowerCase());
+  const isChoice = field.type === "Choice" && Array.isArray(field.choices);
   const body = {
-    __metadata: { type: "SP.Field" },
+    // Real SharePoint REST rejects a Choices payload under the generic
+    // SP.Field metadata type with "The property 'Choices' does not exist
+    // on type 'SP.Field'" (HTTP 400) — confirmed against a real tenant.
+    // SP.FieldChoice is the concrete OData type that actually exposes
+    // Choices; every other field type keeps the generic SP.Field, which
+    // already works for them.
+    __metadata: { type: isChoice ? "SP.FieldChoice" : "SP.Field" },
     Title: field.displayName || field.internalName,
     InternalName: field.internalName,
     FieldTypeKind: FIELD_TYPES[field.type] ?? FIELD_TYPES[typeName] ?? field.type,
     Required: field.required === true
   };
-  if (field.type === "Choice" && field.choices) body.Choices = { results: field.choices };
+  if (isChoice) body.Choices = { results: field.choices };
   return {
     kind: "field", type: "create-field", target: field.internalName,
     method: "POST", path: `${root}/fields`, body

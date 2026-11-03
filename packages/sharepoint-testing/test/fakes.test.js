@@ -62,13 +62,30 @@ test("createListProvisioningFake simulates a missing list, then create, then com
 
   const field = await transport.request(`${transport.webUrl}/_api/web/lists/getbytitle('Articles')/fields`, {
     method: "POST",
-    body: { InternalName: "Status", Title: "Status", FieldTypeKind: 6, Required: true, Choices: { results: ["Draft"] } }
+    // __metadata.type: "SP.FieldChoice" is required here, mirroring the real
+    // SharePoint REST constraint this fake now enforces: the generic
+    // SP.Field type rejects a Choices payload.
+    body: { __metadata: { type: "SP.FieldChoice" }, InternalName: "Status", Title: "Status", FieldTypeKind: 6, Required: true, Choices: { results: ["Draft"] } }
   });
   assert.equal(field.data.TypeAsString, "Choice");
 
   const list = await transport.request(`${transport.webUrl}/_api/web/lists/getbytitle('Articles')?$select=Id,Title`);
   assert.equal(list.data.Title, "Articles");
   assert.equal(transport.state.fields.length, 1);
+});
+
+test("createListProvisioningFake rejects a Choices payload under the generic SP.Field metadata type", async () => {
+  // Confirms the fake now mirrors a real SharePoint REST constraint found
+  // against a live tenant: Choices is only valid under SP.FieldChoice.
+  const transport = createListProvisioningFake({ webUrl: "/sites/demo", listTitle: "Articles", list: { Title: "Articles", BaseTemplate: 100 } });
+  await assert.rejects(
+    () => transport.request(`${transport.webUrl}/_api/web/lists/getbytitle('Articles')/fields`, {
+      method: "POST",
+      body: { __metadata: { type: "SP.Field" }, InternalName: "Status", Title: "Status", FieldTypeKind: 6, Choices: { results: ["Draft"] } }
+    }),
+    (error) => error.status === 400 && /Choices.*does not exist/.test(error.message)
+  );
+  assert.equal(transport.state.fields.length, 0);
 });
 
 test("createListProvisioningFake requires a non-empty listTitle", () => {
