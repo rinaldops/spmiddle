@@ -66,6 +66,66 @@ test("supports binary responses and wildcard only when explicitly enabled", asyn
   assert.equal(last.headers["If-Match"], "*");
 });
 
+test("forwards AbortSignal to fetch and exposes announced content length", async () => {
+  const controller = new AbortController();
+  let fetchOptions;
+  const client = createSharePointRestClient({
+    webUrl: "/sites/app",
+    fetchImpl: async (_url, options) => { fetchOptions = options; return response(200, "abc", { "Content-Length": "3" }); }
+  });
+  const result = await client.request("/_api/file", { responseType: "binary", signal: controller.signal });
+  assert.equal(fetchOptions.signal, controller.signal);
+  assert.equal(result.contentLength, "3");
+});
+
+test("bounded binary rejects an announced oversize response before reading", async () => {
+  let reads = 0;
+  const client = createSharePointRestClient({ webUrl: "/sites/app", fetchImpl: async () => ({
+    status: 200,
+    ok: true,
+    headers: new Headers({ "Content-Length": "5" }),
+    body: { getReader: () => ({ read: async () => { reads += 1; return { done: true }; } }) }
+  }) });
+  await assert.rejects(() => client.request("/_api/file", { responseType: "binary", maxResponseBytes: 4 }), /maxResponseBytes/i);
+  assert.equal(reads, 0);
+});
+
+test("bounded binary counts stream bytes despite a misleading Content-Length and cancels on overflow", async () => {
+  let canceled = false;
+  const client = createSharePointRestClient({ webUrl: "/sites/app", fetchImpl: async () => ({
+    status: 200,
+    ok: true,
+    headers: new Headers({ "Content-Length": "1" }),
+    body: new ReadableStream({
+      start(controller) { controller.enqueue(new Uint8Array([1, 2])); controller.enqueue(new Uint8Array([3, 4])); },
+      cancel() { canceled = true; }
+    })
+  }) });
+  await assert.rejects(() => client.request("/_api/file", { responseType: "binary", maxResponseBytes: 3 }), /maxResponseBytes/i);
+  assert.equal(canceled, true);
+});
+
+test("bounded binary enforces actual bytes when Content-Length is absent", async () => {
+  const client = createSharePointRestClient({ webUrl: "/sites/app", fetchImpl: async () => ({
+    status: 200,
+    ok: true,
+    headers: new Headers(),
+    body: new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array([1, 2])); controller.enqueue(new Uint8Array([3])); controller.close(); } })
+  }) });
+  const result = await client.request("/_api/file", { responseType: "binary", maxResponseBytes: 3 });
+  assert.deepEqual(Array.from(new Uint8Array(result.data)), [1, 2, 3]);
+});
+
+test("bounded binary fallback checks size after arrayBuffer when no stream reader exists", async () => {
+  const client = createSharePointRestClient({ webUrl: "/sites/app", fetchImpl: async () => ({
+    status: 200,
+    ok: true,
+    headers: new Headers(),
+    arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer
+  }) });
+  await assert.rejects(() => client.request("/_api/file", { responseType: "binary", maxResponseBytes: 2 }), /maxResponseBytes/i);
+});
+
 test("extracts a per-item ETag from a filtered collection body (odata.etag), not just a response header", async () => {
   // Regression test for a real bug found against a live tenant: with
   // nometadata, items(id) single-item GETs get an ETag HTTP header, but

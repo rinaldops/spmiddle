@@ -5,6 +5,8 @@
  */
 
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024;
+const DEFAULT_MAX_PAGES = 100;
+const DEFAULT_MAX_ITEMS = 10000;
 
 function text(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new TypeError(`${name} deve ser um nome/caminho de texto não vazio.`);
@@ -52,6 +54,14 @@ function byteLength(value) {
   if (value instanceof ArrayBuffer) return value.byteLength;
   if (ArrayBuffer.isView(value)) return value.byteLength;
   return undefined;
+}
+
+function throwIfAborted(signal) {
+  if (!signal?.aborted) return;
+  if (signal.reason instanceof Error) throw signal.reason;
+  const error = new Error("A operação foi cancelada.");
+  error.name = "AbortError";
+  throw error;
 }
 
 function payloadOf(input) {
@@ -156,12 +166,15 @@ export function createSharePointFileClient({ transport, libraryPath, maxSize = D
   if (!transport || typeof transport.request !== "function") throw new TypeError("transport.request deve ser uma função.");
   const library = serverPath(libraryPath, "libraryPath").replace(/\/+$/, "");
   const site = serverPath(transport.webUrl, "transport.webUrl").replace(/\/+$/, "");
+  const siteUrl = new URL(`${site}/`, globalThis.location?.origin ?? "http://spmiddle.invalid");
   const folder = (value = "") => {
     if (value === "") return library;
     return `${library}/${relativeName(value, "folderPath", true)}`;
   };
   const request = async (path, options) => {
+    throwIfAborted(options?.signal);
     const response = await transport.request(path, options);
+    throwIfAborted(options?.signal);
     if (response?.status >= 400) throw new Error(`A operação de arquivo falhou (HTTP ${response.status}).`);
     return response;
   };
@@ -182,13 +195,89 @@ export function createSharePointFileClient({ transport, libraryPath, maxSize = D
   async function listFiles(options = {}) {
     object(options, "options");
     const root = `${site}/_api/web/GetFolderByServerRelativeUrl('${folder(options.folderPath)}')/Files`;
-    return request(`${root}${options.query ?? ""}`, { method: "GET" });
+    return request(`${root}${options.query ?? ""}`, { method: "GET", signal: options.signal });
   }
   async function downloadFile(input = {}) {
     object(input, "input");
     const fileName = relativeName(input.fileName, "fileName");
     const path = `${site}/_api/web/GetFileByServerRelativeUrl('${folder(input.folderPath)}/${fileName}')/$value`;
-    return request(path, { method: "GET", responseType: "binary" });
+    const maxBytes = input.maxBytes;
+    if (maxBytes !== undefined && (!Number.isSafeInteger(maxBytes) || maxBytes < 0)) throw new TypeError("maxBytes deve ser um inteiro não negativo.");
+    const responseOptions = { method: "GET", responseType: "binary", signal: input.signal };
+    if (maxBytes !== undefined) responseOptions.maxResponseBytes = maxBytes;
+    const response = await request(path, responseOptions);
+    if (maxBytes !== undefined) {
+      const headers = response?.headers;
+      const announced = response?.contentLength ?? (typeof headers?.get === "function" ? headers.get("content-length") : headers?.["content-length"] ?? headers?.["Content-Length"]);
+      if (announced !== undefined && announced !== null && /^\d+$/.test(String(announced)) && Number(announced) > maxBytes) {
+        throw new RangeError("download excede maxBytes anunciado.");
+      }
+      const bytes = byteLength(response?.data);
+      if (bytes !== undefined && bytes > maxBytes) throw new RangeError("download excede maxBytes recebido.");
+      if (response?.data && typeof response.data.size === "number" && response.data.size > maxBytes) throw new RangeError("download excede maxBytes recebido.");
+    }
+    return response;
   }
-  return Object.freeze({ uploadFile, listFiles, downloadFile });
+
+  function collectionPath(kind, options = {}) {
+    return `${site}/_api/web/GetFolderByServerRelativeUrl('${folder(options.folderPath)}')/${kind}`;
+  }
+
+  async function listFolders(options = {}) {
+    object(options, "options");
+    return request(`${collectionPath("Folders", options)}${options.query ?? ""}`, { method: "GET", signal: options.signal });
+  }
+
+  function valuesFrom(response) {
+    const value = response?.data?.value ?? response?.data?.d?.results;
+    if (!Array.isArray(value)) throw new TypeError("resposta de arquivos/pastas deve conter data.value como array.");
+    return value;
+  }
+
+  function nextLinkFrom(response) {
+    return response?.data?.["@odata.nextLink"] ?? response?.data?.["odata.nextLink"] ?? response?.data?.d?.__next ?? null;
+  }
+
+  function safeContinuation(link, collection) {
+    if (typeof link !== "string" || !link.trim() || link.trim().startsWith("//") || link.includes("#")) throw new TypeError("nextLink inválido ou fora do site configurado.");
+    let url;
+    try { url = new URL(link.trim(), siteUrl); }
+    catch { throw new TypeError("nextLink deve ser uma URL HTTP(S) segura."); }
+    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.hash) throw new TypeError("nextLink deve ser HTTP(S), sem credenciais ou fragmento.");
+    if (url.origin !== siteUrl.origin || !url.pathname.startsWith(`${siteUrl.pathname.replace(/\/$/, "")}/`)) {
+      throw new TypeError("nextLink deve permanecer na mesma origem e no site configurado.");
+    }
+    const expected = new URL(collection, siteUrl);
+    if (url.pathname !== expected.pathname) throw new TypeError("nextLink não pode mudar a coleção/pasta solicitada.");
+    return `${url.pathname}${url.search}`;
+  }
+
+  async function listAll(kind, options = {}) {
+    object(options, "options");
+    const maxPages = options.maxPages ?? DEFAULT_MAX_PAGES;
+    const maxItems = options.maxItems ?? DEFAULT_MAX_ITEMS;
+    if (!Number.isSafeInteger(maxPages) || maxPages < 1 || !Number.isSafeInteger(maxItems) || maxItems < 0) throw new TypeError("maxPages deve ser positivo e maxItems não negativo.");
+    const collection = collectionPath(kind, options);
+    const items = [];
+    const seen = new Set();
+    let path = `${collection}${options.query ?? ""}`;
+    for (let page = 0; ; page += 1) {
+      if (page >= maxPages) throw new RangeError("limite maxPages atingido com paginação pendente.");
+      throwIfAborted(options.signal);
+      const response = await request(path, { method: "GET", signal: options.signal });
+      throwIfAborted(options.signal);
+      const pageItems = valuesFrom(response);
+      if (items.length + pageItems.length > maxItems) throw new RangeError("limite maxItems excedido.");
+      items.push(...pageItems);
+      const next = nextLinkFrom(response);
+      if (!next) return { ...response, data: { ...(response.data ?? {}), value: items } };
+      path = safeContinuation(next, collection);
+      if (seen.has(path)) throw new TypeError("ciclo de nextLink detectado.");
+      seen.add(path);
+    }
+  }
+
+  async function listFilesAll(options = {}) { return listAll("Files", options); }
+  async function listFoldersAll(options = {}) { return listAll("Folders", options); }
+  return Object.freeze({ uploadFile, listFiles, listFolders, listFilesAll, listFoldersAll, downloadFile });
 }
