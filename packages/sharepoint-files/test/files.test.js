@@ -85,6 +85,101 @@ test("does not automatically retry a failed file request", async () => {
   assert.equal(attempts, 1);
 });
 
+test("lists folders for the requested folder and propagates AbortSignal", async () => {
+  const controller = new AbortController();
+  const { fake, client } = makeClient({ handler: async () => ({ data: { value: [] }, status: 200 }) });
+  await client.listFolders({ folderPath: "modules", signal: controller.signal });
+  assert.match(fake.calls[0].path, /GetFolderByServerRelativeUrl\('\/sites\/app\/Shared Documents\/modules'\)\/Folders$/);
+  assert.equal(fake.calls[0].options.signal, controller.signal);
+});
+
+test("aggregates file and folder pages while preserving the response envelope", async () => {
+  const next = libraryPath;
+  const { fake, client } = makeClient({ handler: async (path) => {
+    const page = fake.calls.length;
+    return page === 1
+      ? { data: { value: [{ Name: "one" }], "@odata.nextLink": `${siteForTest()}/_api/web/GetFolderByServerRelativeUrl('${next.replace(/'/g, "''")}')/Files?$skiptoken=2` }, status: 200 }
+      : { data: { value: [{ Name: "two" }] }, status: 200 };
+  } });
+  const result = await client.listFilesAll();
+  assert.deepEqual(result.data.value, [{ Name: "one" }, { Name: "two" }]);
+  assert.equal(fake.calls.length, 2);
+  assert.match(fake.calls[1].path, /\$skiptoken=2$/);
+
+  const folderClient = makeClient({ handler: async () => ({ data: { value: [{ Name: "sub" }] }, status: 200 }) }).client;
+  assert.deepEqual((await folderClient.listFoldersAll({ folderPath: "modules" })).data.value, [{ Name: "sub" }]);
+});
+
+function siteForTest() { return "http://spmiddle.invalid/sites/app"; }
+
+test("rejects continuation resource changes, cycles, and page/item limit overflow", async () => {
+  const hostile = makeClient({ handler: async () => ({ data: { value: [], "@odata.nextLink": "/sites/app/_api/web/GetFolderByServerRelativeUrl('/sites/app/Shared%20Documents')/Folders" }, status: 200 }) }).client;
+  await assert.rejects(() => hostile.listFilesAll(), /coleção|pasta/i);
+
+  let calls = 0;
+  const repeated = makeClient({ handler: async () => {
+    calls += 1;
+    return { data: { value: [{ Id: calls }], "@odata.nextLink": "/sites/app/_api/web/GetFolderByServerRelativeUrl('/sites/app/Shared%20Documents')/Files?page=2" }, status: 200 };
+  } }).client;
+  await assert.rejects(() => repeated.listFilesAll(), /ciclo/i);
+  await assert.rejects(() => repeated.listFilesAll({ maxPages: 1 }), /maxPages/i);
+  await assert.rejects(() => repeated.listFilesAll({ maxItems: 0 }), /maxItems/i);
+});
+
+test("accepts legacy d.results pages and normalizes aggregate data.value", async () => {
+  let page = 0;
+  const fake = makeTransport(async (_path, _options) => {
+    page += 1;
+    return page === 1
+      ? { data: { d: { results: [{ Name: "legacy-one" }], __next: "/sites/app/_api/web/GetFolderByServerRelativeUrl('/sites/app/Shared%20Documents')/Files?page=2" } }, status: 200 }
+      : { data: { d: { results: [{ Name: "legacy-two" }] } }, status: 200 };
+  });
+  const client = createSharePointFileClient({ transport: fake.transport, libraryPath });
+  assert.deepEqual((await client.listFilesAll()).data.value, [{ Name: "legacy-one" }, { Name: "legacy-two" }]);
+});
+
+test("rejects unsafe continuation credentials, fragments, and protocols", async () => {
+  for (const nextLink of [
+    "http://user:pass@spmiddle.invalid/sites/app/_api/web/GetFolderByServerRelativeUrl('/sites/app/Shared%20Documents')/Files",
+    "http://spmiddle.invalid/sites/app/_api/web/GetFolderByServerRelativeUrl('/sites/app/Shared%20Documents')/Files#fragment",
+    "javascript:alert(1)"
+  ]) {
+    const client = makeClient({ handler: async () => ({ data: { value: [], "@odata.nextLink": nextLink }, status: 200 }) }).client;
+    await assert.rejects(() => client.listFilesAll(), /nextLink|credenciais|HTTP\(S\)|fragmento/i);
+  }
+});
+
+test("checks AbortSignal before and after requests even when transport ignores it", async () => {
+  const before = new AbortController();
+  before.abort();
+  let calls = 0;
+  const client = makeClient({ handler: async () => { calls += 1; return { data: { value: [] }, status: 200 }; } }).client;
+  await assert.rejects(() => client.listFoldersAll({ signal: before.signal }), { name: "AbortError" });
+  assert.equal(calls, 0);
+
+  const after = new AbortController();
+  const resolvingClient = makeClient({ handler: async () => {
+    after.abort();
+    return { data: { value: [] }, status: 200 };
+  } }).client;
+  await assert.rejects(() => resolvingClient.listFiles({ signal: after.signal }), { name: "AbortError" });
+});
+
+test("downloadFile maxBytes checks announced and received size", async () => {
+  const { client } = makeClient({ handler: async () => ({ data: new Uint8Array([1, 2, 3]).buffer, headers: { "content-length": "3" }, status: 200 }) });
+  await assert.rejects(() => client.downloadFile({ fileName: "large.bin", maxBytes: 2 }), /maxBytes/i);
+  const exact = makeClient({ handler: async () => ({ data: new Uint8Array([1, 2]).buffer, status: 200 }) }).client;
+  assert.equal((await exact.downloadFile({ fileName: "small.bin", maxBytes: 2 })).data.byteLength, 2);
+});
+
+test("downloadFile forwards maxBytes as transport maxResponseBytes", async () => {
+  const { fake, client } = makeClient({ handler: async () => ({ data: new Uint8Array([1]).buffer, status: 200 }) });
+  await client.downloadFile({ fileName: "bounded.bin", maxBytes: 4 });
+  assert.equal(fake.calls[0].options.maxResponseBytes, 4);
+  await client.downloadFile({ fileName: "legacy.bin" });
+  assert.equal(Object.hasOwn(fake.calls[1].options, "maxResponseBytes"), false);
+});
+
 for (const { name, fn } of tests) {
   try {
     await fn();

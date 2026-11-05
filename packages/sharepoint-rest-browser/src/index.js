@@ -62,11 +62,57 @@ function header(response, name) {
   return response.headers?.get?.(name) ?? response.headers?.get?.(name.toLowerCase()) ?? null;
 }
 
-async function responseBody(response, responseType) {
+async function boundedBinaryBody(response, maxResponseBytes) {
+  if (!Number.isSafeInteger(maxResponseBytes) || maxResponseBytes < 0) throw new TypeError("maxResponseBytes deve ser inteiro não negativo.");
+  const announced = response.headers?.get?.("Content-Length");
+  if (announced !== null && announced !== undefined && /^\d+$/.test(announced) && Number(announced) > maxResponseBytes) {
+    throw new RangeError("resposta binária excede maxResponseBytes anunciado.");
+  }
+
+  const reader = response.body?.getReader?.();
+  if (!reader) {
+    // Compatibility for test doubles/non-Fetch responses; this fallback validates only after allocation.
+    const body = typeof response.arrayBuffer === "function" ? await response.arrayBuffer() : await response.blob();
+    const size = body?.byteLength ?? body?.size;
+    if (typeof size === "number" && size > maxResponseBytes) throw new RangeError("resposta binária excede maxResponseBytes recebido.");
+    return body;
+  }
+
+  const chunks = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = value instanceof Uint8Array ? value : new Uint8Array(value.buffer ?? value, value.byteOffset ?? 0, value.byteLength ?? value.length);
+      total += chunk.byteLength;
+      if (total > maxResponseBytes) {
+        try { await Promise.resolve(reader.cancel("maxResponseBytes excedido")).catch(() => {}); } catch {}
+        throw new RangeError("resposta binária excede maxResponseBytes recebido.");
+      }
+      chunks.push(chunk);
+    }
+  } finally {
+    reader.releaseLock?.();
+  }
+  const result = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { result.set(chunk, offset); offset += chunk.byteLength; }
+  return result.buffer;
+}
+
+async function responseBody(response, responseType, maxResponseBytes) {
   if (response.status === 204) return null;
   if (responseType === "binary") {
-    try { return typeof response.arrayBuffer === "function" ? await response.arrayBuffer() : await response.blob(); }
-    catch (cause) { throw new SharePointRestError("invalid-response", "Não foi possível ler a resposta binária.", { cause }); }
+    try {
+      return maxResponseBytes === undefined
+        ? (typeof response.arrayBuffer === "function" ? await response.arrayBuffer() : await response.blob())
+        : await boundedBinaryBody(response, maxResponseBytes);
+    }
+    catch (cause) {
+      if (cause instanceof RangeError || cause instanceof TypeError) throw cause;
+      throw new SharePointRestError("invalid-response", "Não foi possível ler a resposta binária.", { cause });
+    }
   }
   let text;
   try {
@@ -144,7 +190,7 @@ export function createSharePointRestClient({
     finally { digestRequest = undefined; }
   }
 
-  async function request(path, { method = "GET", headers = {}, body, etag, allowWildcardEtag = false, responseType = "json" } = {}) {
+  async function request(path, { method = "GET", headers = {}, body, etag, allowWildcardEtag = false, responseType = "json", signal, maxResponseBytes } = {}) {
     const requestedMethod = String(method).toUpperCase();
     if (!METHODS.has(requestedMethod)) throw new TypeError("method deve ser GET, POST, MERGE ou DELETE.");
     if (!new Set(["json", "binary"]).has(responseType)) throw new TypeError("responseType deve ser json ou binary.");
@@ -170,16 +216,18 @@ export function createSharePointRestClient({
     }
     const options = { method: transportMethod, headers: requestHeaders };
     if (body !== undefined) options.body = body;
+    if (signal !== undefined) options.signal = signal;
     const response = await fetchResponse(url, options, requestedMethod === "GET");
     let data;
-    try { data = await responseBody(response, responseType); }
+    try { data = await responseBody(response, responseType, maxResponseBytes); }
     catch (error) { error.path ??= url; throw error; }
     // Real classic SharePoint REST minimalmetadata responses carry the
     // per-item ETag as body["odata.etag"] (no "@" prefix) - confirmed
     // against a real tenant, for both single-item and filtered-collection
     // item shapes. "@odata.etag" and "__metadata.etag" are kept as
     // fallbacks for other metadata levels/shapes a caller might request.
-    return Object.freeze({ data, etag: header(response, "ETag") || data?.["odata.etag"] || data?.["@odata.etag"] || data?.__metadata?.etag || null, status: response.status });
+    const contentLength = header(response, "Content-Length");
+    return Object.freeze({ data, etag: header(response, "ETag") || data?.["odata.etag"] || data?.["@odata.etag"] || data?.__metadata?.etag || null, status: response.status, ...(contentLength === null ? {} : { contentLength }) });
   }
 
   return Object.freeze({ webUrl: site, request, getDigest });
