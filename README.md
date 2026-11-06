@@ -15,6 +15,26 @@ Para integrar uma nova aplicação, comece pelo
 composição dos pacotes, contratos de transporte, schemas, queries, repositories,
 arquivos, segurança, erros, provisionamento e testes com fake SharePoint.
 
+## Largura escolhida na publicação MSE
+
+O adaptador opcional `host-adapters/modern-script-editor/` permite ao publicador
+escolher `data-spmiddle-layout="Contained"` (padrão) ou `"FullBleed"` no wrapper
+do snippet, sem modificar a aplicação pronta. O wrapper controla o espaço
+externo; a aplicação continua responsiva ao container e preserva seu próprio
+`max-width`. Os pacotes de dados continuam sem DOM/CSS ou dependência de MSE.
+
+Consulte a [seção 17 do manual](docs/CONSUMER-MANUAL.md#17-layout-de-publicação-no-modern-script-editor)
+para assets, snippet, bootstrap, cleanup, limites e validação. O exemplo completo
+está em [`examples/mse-layout/`](examples/mse-layout/). `FullBleed` não é
+fullscreen nem remove cabeçalho/navegação SharePoint. A distribuição `0.2.0`
+foi publicada em seis sites autorizados e validada com testes DOM transitórios;
+ativação de consumidores e certificação visual de aplicações são etapas separadas
+(ver o [registro operacional](docs/DEPLOYMENT.md#publicação-020--6-de-novembro-de-2026)).
+
+A distribuição independente é gerada por `npm run build:release` em
+`dist/<versão>/`. Consulte [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) para
+publicação imutável, hashes, ativação em consumidores e rollback.
+
 ## Estado do desenvolvimento
 
 O baseline atual implementa a fundação REST e de domínio do SPMIDDLE,
@@ -34,9 +54,9 @@ camada estão documentados em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
 O runtime incremental CAMAP foi validado em `Preview.aspx` com integração somente leitura;
 ele não substitui o `mse-platform`.
 
-Estado operacional do baseline:
+Baseline histórico do preview CAMAP (outubro de 2026):
 
-- `main`/`origin/main`: `83183d6`;
+- referência histórica do baseline: `83183d6` (não indica o HEAD atual);
 - asset CAMAP publicado em pasta imutável `.../preview/...-v9/`;
 - `Preview.aspx`: `rootMounts=1`, `fullReloads=0`, `internalNavigations=0`;
 - Explore Mais: não é consumidor válido do site CAMAP e foi despublicado;

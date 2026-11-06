@@ -1,0 +1,25 @@
+.layout-example-app {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 24px;
+  font-family: "Petrobras Sans", Arial, sans-serif;
+  color: #000000;
+  background: #FFFFFF;
+}
+
+.layout-example-app h2 {
+  color: #008542;
+}
+
+.layout-example-app__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 16px;
+}
+
+.layout-example-app__grid article {
+  border: 1px solid #75787B;
+  padding: 16px;
+}

@@ -52,7 +52,7 @@ sibling modules, except the two pairs noted above.
 
 ## Host composition
 
-Hosts (everything under `examples/`) compose the packages above; the
+Hosts (the compositions under `examples/`) compose the packages above; the
 middleware itself never imports DOM, DOM events, or the SharePoint Modern
 Script Editor runtime. For example:
 
@@ -68,6 +68,29 @@ Script Editor runtime. For example:
   legacy "Explore Mais" contract.
 
 A host owns DOM/MSE/React-specific code; the packages above never do.
+
+### Optional MSE publication layout adapter
+
+`host-adapters/modern-script-editor/` is production host-specific code, separate
+from every data package. `layout.js` exports `applyMseLayout(host)` and accesses
+DOM only when invoked. `layout.css` targets only the reserved publication wrapper;
+`spmiddle-mse-host.js` is a classic external script (compatible with MSE loaders
+that skip module tags). It imports `layout.js` natively, exposes the reserved
+`SPMiddleMseHost.ready` Promise and initializes existing wrappers when the document
+is ready. It does not import data packages or `mse-platform`.
+
+The publisher selects `data-spmiddle-layout="Contained"` (default) or
+`"FullBleed"`. The adapter adjusts only the wrapper's horizontal margins against
+the closest SharePoint content boundary, intersected with the useful viewport.
+The app mounts on a child root and keeps its own responsive UI and max-width.
+There are no global SharePoint style overrides, automatic application loader,
+fullscreen behavior, publication API or implicit provisioning.
+
+The controller exposes `refresh()` and `dispose()`, with per-element idempotence,
+resize handling and explicit cleanup. The bootstrap owns app mount/dispose and
+must not combine this adapter with another full-bleed owner. The executable
+composition is `examples/mse-layout/`; the full contract and limitations are in
+[consumer manual section 17](CONSUMER-MANUAL.md#17-layout-de-publicação-no-modern-script-editor).
 
 ## Why there is no `npm workspaces`
 
@@ -93,3 +116,7 @@ The root `package.json` chains `npm --prefix packages/<package> test` for
 every package, in dependency order (packages with no sibling dependency
 first), followed by every `examples/*/*.test.js` script. Each package's own
 `npm test` is runnable in isolation.
+
+`npm run test:mse-layout` also runs the host adapter tests, including the real
+external scripts and dynamic imports in Node's isolated VM module runtime. Geometry/event doubles
+provide local contract coverage, not browser rendering or tenant certification.

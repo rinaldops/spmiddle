@@ -1,11 +1,13 @@
 {
   "name": "spmiddle",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Client-side JavaScript middleware for SharePoint data access",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm --prefix packages/sharepoint-testing test && npm --prefix packages/sharepoint-schema test && npm --prefix packages/sharepoint-provisioning test && npm --prefix packages/data-core test && npm --prefix packages/sharepoint-files test && npm --prefix packages/sharepoint-rich-text test && npm --prefix packages/sharepoint-rest-browser test && node examples/integrated-local/integration.test.js && node examples/first-consumer-recursos/adapter.test.js && node examples/first-consumer-recursos/parity.test.js && node examples/first-consumer-recursos/schema-parity.test.js && node examples/first-consumer-recursos/security-parity.test.js && node examples/standalone-host/host.test.js && node examples/react-compatible-host/host.test.js && node examples/spfx-compatible-host/host.test.js && node examples/incremental-mse-host/host.test.js && node examples/incremental-mse-host/dry-run.test.js && node examples/incremental-mse-host/camap-runtime.test.js"
+    "build:release": "node scripts/build-release.js",
+    "test": "npm --prefix packages/sharepoint-testing test && npm --prefix packages/sharepoint-schema test && npm --prefix packages/sharepoint-provisioning test && npm --prefix packages/data-core test && npm --prefix packages/sharepoint-files test && npm --prefix packages/sharepoint-rich-text test && npm --prefix packages/sharepoint-rest-browser test && node examples/integrated-local/integration.test.js && node examples/first-consumer-recursos/adapter.test.js && node examples/first-consumer-recursos/parity.test.js && node examples/first-consumer-recursos/schema-parity.test.js && node examples/first-consumer-recursos/security-parity.test.js && node examples/standalone-host/host.test.js && node examples/react-compatible-host/host.test.js && node examples/spfx-compatible-host/host.test.js && node examples/incremental-mse-host/host.test.js && node examples/incremental-mse-host/dry-run.test.js && node examples/incremental-mse-host/camap-runtime.test.js && npm run test:mse-layout",
+    "test:mse-layout": "node --experimental-vm-modules host-adapters/modern-script-editor/test/layout.test.js"
   },
   "engines": {
     "node": ">=20"

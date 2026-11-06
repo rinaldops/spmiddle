@@ -255,6 +255,25 @@ O SPMIDDLE não terá dependência de:
 
 Esses recursos poderão ser usados somente por adaptadores específicos de host.
 
+### 6.0 Adaptador opcional de largura na publicação MSE — novembro de 2026
+
+Implementado em `host-adapters/modern-script-editor/`, sem alterar os pacotes de
+dados nem o `mse-platform`. O publicador escolhe `data-spmiddle-layout="Contained"`
+(padrão) ou `"FullBleed"` em um wrapper externo à raiz da aplicação pronta.
+O adaptador aplica CSS isolado e medição de limites SharePoint/viewport; a UI
+permanece responsiva ao container e conserva seu próprio `max-width`.
+
+Não é fullscreen, publicador, gerador de telas ou importação do Site Kernel.
+Assets e bootstrap externos, `refresh/dispose`, contrato do desenvolvedor,
+limitações e rollback estão na
+[seção 17 do manual](docs/CONSUMER-MANUAL.md#17-layout-de-publicação-no-modern-script-editor).
+`npm run test:mse-layout` valida o contrato local. A distribuição `0.2.0` foi
+publicada em seis sites autorizados e validada com testes DOM transitórios;
+não houve migração de consumidores nem certificação visual de aplicações.
+O [registro operacional](docs/DEPLOYMENT.md#publicação-020--6-de-novembro-de-2026)
+preserva resultados e limites. Exemplos incrementais e assets históricos CAMAP
+não foram modificados.
+
 ### 6.1 Atualização incremental no host
 
 Quando uma página ASPX já estiver carregada, ações que possam ser resolvidas

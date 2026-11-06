@@ -1,0 +1,18 @@
+/* Reserved publication wrapper only: no app styles or SharePoint overrides. */
+[data-spmiddle-host] {
+  display: block;
+  box-sizing: border-box;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+[data-spmiddle-host].spmiddle-mse-host--full-bleed {
+  max-width: none;
+  margin-left: var(--spmiddle-host-margin-left, 0px);
+  margin-right: var(--spmiddle-host-margin-right, 0px);
+}
