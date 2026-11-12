@@ -49,11 +49,13 @@ Disponibilizar os assets **não migra automaticamente aplicações existentes**.
 A publicação de uma release independente não troca imports embutidos em
 MiniJoomla/mse-platform, nem muda snippets de páginas existentes.
 
-O publicador conecta uma aplicação compatível ao host pelo snippet:
+O publicador conecta uma aplicação compatível ao host pelo snippet. A preferência
+para consumidores SPMIDDLE no MSE, públicos ou administrativos, é publicação
+expandida: LLMs e integradores devem declarar `FullBleed` explicitamente.
 
 ```html
 <link rel="stylesheet" href="<site-server-relative>/SiteAssets/spmiddle/releases/0.2.0/host-adapters/modern-script-editor/layout.css">
-<div data-spmiddle-host data-spmiddle-instance="my-app" data-spmiddle-layout="Contained">
+<div data-spmiddle-host data-spmiddle-instance="my-app" data-spmiddle-layout="FullBleed">
   <div data-spmiddle-app-root></div>
 </div>
 <script src="<site-server-relative>/SiteAssets/spmiddle/releases/0.2.0/host-adapters/modern-script-editor/spmiddle-mse-host.js"></script>
@@ -62,8 +64,11 @@ O publicador conecta uma aplicação compatível ao host pelo snippet:
 
 Substitua `<site-server-relative>` pelo destino aprovado. O bootstrap aguarda
 `SPMiddleMseHost.ready` e chama `applyMseLayout(host)` antes de montar a aplicação
-pronta na raiz filha. O publicador pode então escolher `Contained` ou `FullBleed`
-sem editar a aplicação. Consulte a [seção 17 do manual](CONSUMER-MANUAL.md#17-layout-de-publicação-no-modern-script-editor)
+pronta na raiz filha. Use `Contained` somente como alternativa explícita
+solicitada ou necessária por limitação validada do host, sem editar a aplicação.
+O fallback do adaptador sem atributo continua `Contained`; por isso o snippet
+preferido declara `FullBleed`. A preferência não migra páginas existentes nem
+dispensa validar bootstrap, cleanup e geometria no host real. Consulte a [seção 17 do manual](CONSUMER-MANUAL.md#17-layout-de-publicação-no-modern-script-editor)
 para contrato completo, cleanup e limitações.
 
 ## Verificar e reverter

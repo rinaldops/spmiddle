@@ -18,6 +18,15 @@ Para referências específicas, consulte também:
 - [Seção 17](#17-layout-de-publicação-no-modern-script-editor): `Contained` e
   `FullBleed` sem alterar a aplicação pronta.
 
+**Diretriz para LLMs e integradores:** ao preparar publicações de consumidores
+SPMIDDLE no Modern Script Editor, gere o snippet com
+`data-spmiddle-layout="FullBleed"` explícito no wrapper de publicação. Esta é a
+preferência para experiências públicas e administrativas. Use `Contained`
+somente como alternativa explícita, por solicitação ou limitação validada do
+host. Inclua os assets e o bootstrap compatível descritos na seção 17; o atributo
+isolado não basta. Esta preferência não altera o fallback do runtime nem migra
+páginas existentes automaticamente.
+
 Todos os exemplos usam placeholders e caminhos server-relative. Não coloque
 tenant, GUID, credencial, token, cookie ou dado corporativo neste manual.
 
@@ -67,6 +76,8 @@ um agregador de schemas, repositories, arquivos ou segurança.
 8. Preserve e envie ETags em alterações e exclusões.
 9. Teste tudo com fake transport.
 10. Execute provisioning somente em fluxo administrativo confirmado.
+11. Para publicação no MSE, prepare o wrapper com `FullBleed` explícito, assets
+    externos e bootstrap compatível; valide o host real conforme a seção 17.
 
 O startup da aplicação não deve criar listas, campos, índices ou arquivos.
 
@@ -471,6 +482,12 @@ confirmação e verificação. Não chame tenant real na suíte local.
 - [ ] Provisionamento está fora do startup e exige aprovação.
 - [ ] Testes usam fake transport e nenhum dado real.
 - [ ] Se houver host MSE, o wrapper de publicação está separado da raiz da aplicação.
+- [ ] O snippet MSE explicita `data-spmiddle-layout="FullBleed"`; uma exceção
+      `Contained` tem solicitação ou limitação validada registrada na integração.
+- [ ] CSS e scripts externos do host estão referenciados; o bootstrap aguarda
+      `SPMiddleMseHost.ready` e aplica o layout antes da montagem.
+- [ ] O host real foi validado em edição/leitura, resize, foco e zoom, sem
+      sobreposição de web parts vizinhas nem rolagem horizontal indevida.
 - [ ] Aplicação responde à largura do container, sem depender de `100vw`.
 - [ ] Só um adaptador controla a largura; cleanup chama `dispose()`.
 
@@ -526,10 +543,23 @@ monorepo):
 
 ### 17.1 Quem escolhe a largura
 
-O publicador escolhe `Contained` ou `FullBleed` no snippet do Modern Script
-Editor (MSE), sem recompilar nem editar o CSS da aplicação pronta. O adaptador
-opcional em `host-adapters/modern-script-editor/` lê essa escolha e dimensiona
-um **wrapper externo**, enquanto a aplicação monta em uma raiz filha:
+A preferência de publicação no Modern Script Editor (MSE) é **`FullBleed`**.
+O publicador e a LLM que preparar o código devem incluir explicitamente
+`data-spmiddle-layout="FullBleed"` no wrapper, para permitir publicação expandida,
+tanto em páginas públicas quanto administrativas dos consumidores SPMIDDLE.
+Preserve na raiz filha o marcador de montagem exigido por cada aplicação;
+a escolha de largura pertence ao wrapper, não ao marcador público/admin.
+
+`Contained` permanece disponível como alternativa explícita quando o usuário
+solicitar layout contido ou uma limitação validada do host exigir essa escolha
+(por exemplo, composição multicoluna incompatível com expansão). Registre a
+exceção na integração; não tente forçar expansão alterando o shell SharePoint.
+Esta diretriz orienta novos snippets e revisões de publicação autorizadas, não
+altera automaticamente páginas existentes nem autoriza sua migração.
+
+A escolha no snippet não exige recompilar nem editar o CSS da aplicação pronta.
+O adaptador opcional em `host-adapters/modern-script-editor/` lê essa escolha e
+dimensiona um **wrapper externo**, enquanto a aplicação monta em uma raiz filha:
 
 ```text
 SharePoint (página, seção, autenticação e publicação)
@@ -553,13 +583,14 @@ imutável e autorizada** em `SiteAssets`:
 - `host-adapters/modern-script-editor/spmiddle-mse-host.js`.
 
 Acrescente o CSS, o runtime e o bootstrap da aplicação pronta. Exemplo de snippet
-com caminhos placeholders (substitua pelo site e pela versão aprovados):
+com `FullBleed` explícito e caminhos placeholders (substitua pelo site e pela
+versão aprovados):
 
 ```html
 <link rel="stylesheet" href="/sites/example/SiteAssets/spmiddle/host-v1/layout.css">
 <link rel="stylesheet" href="/sites/example/SiteAssets/my-app/app-v1/app.css">
 
-<div data-spmiddle-host data-spmiddle-instance="my-app" data-spmiddle-layout="Contained">
+<div data-spmiddle-host data-spmiddle-instance="my-app" data-spmiddle-layout="FullBleed">
   <div data-spmiddle-app-root></div>
 </div>
 
@@ -567,11 +598,17 @@ com caminhos placeholders (substitua pelo site e pela versão aprovados):
 <script src="/sites/example/SiteAssets/my-app/app-v1/bootstrap.js"></script>
 ```
 
-Para expandir, o publicador muda **somente**:
+O snippet acima já solicita expansão. Para a alternativa contida explicitamente
+solicitada ou justificada, o publicador muda **somente** o valor no wrapper:
 
 ```html
-data-spmiddle-layout="FullBleed"
+data-spmiddle-layout="Contained"
 ```
+
+Não acrescente `FullBleed` como parâmetro de URL do loader da aplicação: o
+contrato deste adaptador é o atributo no wrapper com os assets e a integração de
+bootstrap. Um loader legado que apenas monta a aplicação não comprova essa
+integração; adapte e valide seu ciclo de vida conforme a seção 17.5.
 
 O atributo sem os assets não executa nenhuma adaptação. O CSS deve estar carregado
 antes da medição/montagem. O ponto de entrada é um **script externo clássico**:
@@ -595,6 +632,11 @@ raiz de `host-v1`. Em ambos os casos, preserve os imports relativos.
 | `Contained` | Largura da coluna/seção/web part atual; não remove as margens do canvas SharePoint. | A UI precisa funcionar em containers estreitos. `width: 100%` refere-se ao container, não à janela. |
 | `FullBleed` | Expande somente o wrapper até a caixa cliente do ancestral SharePoint mais próximo (`contentScrollRegion` ou `spPageChromeAppDiv`), limitada à largura útil da viewport. Na ausência desses ancestrais, usa a viewport. | A UI deve funcionar também em larguras grandes. O host não cancela `max-width`, padding ou espaçamento interno da aplicação. |
 | Atributo ausente | Usa `Contained`. | Mesmas obrigações do modo contido. |
+
+**Fallback de runtime não é preferência de publicação:** a ausência do atributo
+continua selecionando `Contained` por compatibilidade. Para seguir esta diretriz,
+o snippet deve declarar `FullBleed` explicitamente; não altere o fallback do
+adaptador para implementar uma escolha de publicação.
 
 Os valores são case-insensitive e ignoram espaços externos (`contained` também
 é aceito). Valor vazio ou desconhecido gera `TypeError`; o auto-inicializador

@@ -17,11 +17,18 @@ arquivos, segurança, erros, provisionamento e testes com fake SharePoint.
 
 ## Largura escolhida na publicação MSE
 
-O adaptador opcional `host-adapters/modern-script-editor/` permite ao publicador
-escolher `data-spmiddle-layout="Contained"` (padrão) ou `"FullBleed"` no wrapper
-do snippet, sem modificar a aplicação pronta. O wrapper controla o espaço
-externo; a aplicação continua responsiva ao container e preserva seu próprio
-`max-width`. Os pacotes de dados continuam sem DOM/CSS ou dependência de MSE.
+Nas publicações de consumidores SPMIDDLE no Modern Script Editor, a preferência
+é **publicação expandida**, com `data-spmiddle-layout="FullBleed"` explícito no
+wrapper do snippet, tanto na experiência pública quanto na administrativa.
+LLMs e integradores devem seguir essa orientação ao gerar snippets; `Contained`
+é alternativa explícita quando solicitada ou necessária por uma limitação
+validada do host. O fallback do runtime, quando o atributo é omitido, continua
+sendo `Contained`: não omita o atributo para implementar a preferência.
+
+O adaptador opcional `host-adapters/modern-script-editor/` aplica essa escolha
+sem modificar a aplicação pronta. O wrapper controla o espaço externo; a
+aplicação continua responsiva ao container e preserva seu próprio `max-width`.
+Os pacotes de dados continuam sem DOM/CSS ou dependência de MSE.
 
 Consulte a [seção 17 do manual](docs/CONSUMER-MANUAL.md#17-layout-de-publicação-no-modern-script-editor)
 para assets, snippet, bootstrap, cleanup, limites e validação. O exemplo completo

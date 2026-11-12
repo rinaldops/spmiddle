@@ -18,12 +18,18 @@ montá-la na raiz filha.
 
 3. Substitua `/sites/example/SiteAssets/spmiddle/host-v1/` em `snippet.html` pela
    pasta versionada aprovada e insira o trecho no Modern Script Editor.
-4. Escolha `data-spmiddle-layout="Contained"` ou `"FullBleed"` no wrapper.
+4. **Preferência para novas publicações:** use `data-spmiddle-layout="FullBleed"`.
+   Use `Contained` como exceção explícita por solicitação ou limitação validada do host.
+   Se o atributo for omitido, o runtime mantém o fallback histórico: `Contained`.
    Não há mudança em `app.js` ou `app.css`.
 
 `Contained` mantém o espaço da seção atual. `FullBleed` expande o wrapper até a
 área útil de conteúdo, mas a aplicação de exemplo conserva `max-width: 1200px`.
 Ela não será obrigada a ocupar toda a área ampliada.
+
+A preferência por `FullBleed` aplica-se a novos snippets e revisões autorizadas,
+em experiências públicas ou administrativas. Não altera páginas já publicadas
+sem republicação do HTML.
 
 O snippet usa scripts externos clássicos e imports nativos relativos; confirme
 MIME, CSP e permissões. O host deve carregar antes do bootstrap, que aguarda

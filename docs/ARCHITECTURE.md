@@ -79,9 +79,21 @@ that skip module tags). It imports `layout.js` natively, exposes the reserved
 `SPMiddleMseHost.ready` Promise and initializes existing wrappers when the document
 is ready. It does not import data packages or `mse-platform`.
 
-The publisher selects `data-spmiddle-layout="Contained"` (default) or
-`"FullBleed"`. The adapter adjusts only the wrapper's horizontal margins against
-the closest SharePoint content boundary, intersected with the useful viewport.
+The publisher can select `data-spmiddle-layout="Contained"` or `"FullBleed"` on the
+reserved wrapper.
+
+For new snippets and authorized revisions in Modern Script Editor, prefer
+**FullBleed** for both public and administrative experiences by setting
+`data-spmiddle-layout="FullBleed"` explicitly. `Contained` remains available
+as an explicit exception requested by the user or required by a validated host limitation. If the attribute is
+omitted, the runtime keeps the historical fallback for backwards compatibility:
+`Contained`.
+
+This preference is guidance for new markup; it does **not** change the layout of
+already published pages unless they are republished with updated HTML.
+
+The adapter adjusts only the wrapper's horizontal margins against the closest
+SharePoint content boundary, intersected with the useful viewport.
 The app mounts on a child root and keeps its own responsive UI and max-width.
 There are no global SharePoint style overrides, automatic application loader,
 fullscreen behavior, publication API or implicit provisioning.

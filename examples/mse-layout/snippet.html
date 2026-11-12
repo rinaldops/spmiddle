@@ -2,7 +2,13 @@
 <link rel="stylesheet" href="/sites/example/SiteAssets/spmiddle/host-v1/host-adapters/modern-script-editor/layout.css">
 <link rel="stylesheet" href="/sites/example/SiteAssets/spmiddle/host-v1/examples/mse-layout/app.css">
 
-<div data-spmiddle-host data-spmiddle-instance="layout-example" data-spmiddle-layout="Contained">
+<!--
+  Layout options for the wrapper:
+  - Preferred for new publications: data-spmiddle-layout="FullBleed"
+  - Explicit alternative:          data-spmiddle-layout="Contained"
+  - Runtime fallback if omitted: Contained (not the publication preference)
+-->
+<div data-spmiddle-host data-spmiddle-instance="layout-example" data-spmiddle-layout="FullBleed">
   <div data-spmiddle-app-root></div>
 </div>
 
