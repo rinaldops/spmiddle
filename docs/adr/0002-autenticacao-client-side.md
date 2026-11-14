@@ -30,7 +30,7 @@ and 5).
 ## Why
 
 Any code shipped to a browser is inspectable by the user running it and by
-tooling with equivalent access (`docs/API.md`, "Browser-only security
+tooling with equivalent access (`docs/CONTRATOS.md`, "Browser-only security
 boundaries"). An allowlist cannot be a substitute for real authorization —
 it only prevents the *client itself* from being turned into an arbitrary
 request factory against SharePoint sites it was not configured for.

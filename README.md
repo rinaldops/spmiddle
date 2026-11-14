@@ -1,118 +1,66 @@
-# SPMIDDLE
+﻿# SPMIDDLE
 
-> Middleware JavaScript client-side para aplicações que utilizam o SharePoint
-> como infraestrutura de persistência e consulta.
+> Middleware JavaScript **client-side** para aplicações que utilizam o SharePoint como infraestrutura de persistência e consulta.
 
-O SPMIDDLE inicialmente será executado no navegador e usará a sessão e as
-permissões do usuário corrente para acessar o SharePoint. O projeto não terá um
-backend próprio nem um ORM completo na primeira fase.
+O SPMIDDLE executa no navegador e usa a sessão e as permissões do usuário corrente para acessar o SharePoint. O projeto **não** tem backend próprio no baseline atual.
 
-A diretriz e o planejamento completos estão em
-[`PLANO-SPMIDDLE.md`](PLANO-SPMIDDLE.md).
+## Propósito
 
-Para integrar uma nova aplicação, comece pelo
-[`docs/CONSUMER-MANUAL.md`](docs/CONSUMER-MANUAL.md). O manual reúne a
-composição dos pacotes, contratos de transporte, schemas, queries, repositories,
-arquivos, segurança, erros, provisionamento e testes com fake SharePoint.
+Prover uma camada reutilizável (schemas, mappers, repositories e clientes especializados) para que aplicações JavaScript usem o SharePoint REST com:
 
-## Largura escolhida na publicação MSE
+- contratos explícitos (sem OData arbitrário vindo da UI);
+- paginação limitada e previsível;
+- ETags e concorrência;
+- erros tipados e retry controlado;
+- provisionamento administrativo `inspect → apply → verify`;
+- guardrails de segurança para rich text, URLs e arquivos;
+- suíte local baseada em fake SharePoint (sem depender de tenant real).
 
-Nas publicações de consumidores SPMIDDLE no Modern Script Editor, a preferência
-é **publicação expandida**, com `data-spmiddle-layout="FullBleed"` explícito no
-wrapper do snippet, tanto na experiência pública quanto na administrativa.
-LLMs e integradores devem seguir essa orientação ao gerar snippets; `Contained`
-é alternativa explícita quando solicitada ou necessária por uma limitação
-validada do host. O fallback do runtime, quando o atributo é omitido, continua
-sendo `Contained`: não omita o atributo para implementar a preferência.
+## Invariantes (contratos e restrições)
 
-O adaptador opcional `host-adapters/modern-script-editor/` aplica essa escolha
-sem modificar a aplicação pronta. O wrapper controla o espaço externo; a
-aplicação continua responsiva ao container e preserva seu próprio `max-width`.
-Os pacotes de dados continuam sem DOM/CSS ou dependência de MSE.
+Estas regras são parte do contrato do projeto (não são “dicas”). Elas devem permanecer verdadeiras a menos que haja decisão explícita em ADR ou atualização do plano:
 
-Consulte a [seção 17 do manual](docs/CONSUMER-MANUAL.md#17-layout-de-publicação-no-modern-script-editor)
-para assets, snippet, bootstrap, cleanup, limites e validação. O exemplo completo
-está em [`examples/mse-layout/`](examples/mse-layout/). `FullBleed` não é
-fullscreen nem remove cabeçalho/navegação SharePoint. A distribuição `0.2.0`
-foi publicada em seis sites autorizados e validada com testes DOM transitórios;
-ativação de consumidores e certificação visual de aplicações são etapas separadas
-(ver o [registro operacional](docs/DEPLOYMENT.md#publicação-020--6-de-novembro-de-2026)).
+- **Client-side, sem elevação:** o middleware roda no navegador; permissões e identidade continuam sendo do SharePoint/usuário corrente. Não há cofre de segredos nem fronteira de autorização no frontend.
+- **Sem segredos em código/assets/docs:** não gravar tokens, cookies, credenciais, GUIDs/URLs corporativos reais ou dados pessoais.
+- **Allowlist e caminhos server-relative:** não aceitar `webUrl`/`listPath`/`listId` arbitrários provenientes de UI. Validar sempre que requests permanecem no `/_api` do site allowlisted.
+- **ETag obrigatório em escritas relevantes:** `update`/`delete` requerem ETag exata (sem `If-Match: *` por default).
+- **Provisionamento fora do startup:** provisioning só em fluxo administrativo confirmado (`inspect → plano → confirmação → apply → verify`).
+- **Publicação imutável:** releases independentes no SharePoint devem ir para pastas versionadas e imutáveis (`SiteAssets/spmiddle/releases/<versão>/`), sem overwrite.
+- **Testes locais sem tenant real:** a suíte usa transporte simulado; automação/inspeção em navegador corporativo segue a diretriz do workspace (FIORI-AUTO).
 
-A distribuição independente é gerada por `npm run build:release` em
-`dist/<versão>/`. Consulte [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) para
-publicação imutável, hashes, ativação em consumidores e rollback.
+## Documentação canônica
 
-## Estado do desenvolvimento
+- Contratos (canônico): [docs/CONTRATOS.md](docs/CONTRATOS.md)
+- Arquitetura (canônico): [docs/ARQUITETURA.md](docs/ARQUITETURA.md)
+- Transporte REST e cliente de listas: [docs/CONTRATOS.md](docs/CONTRATOS.md#api-surface)
+- Contratos: [schema](docs/CONTRATOS.md#schema-contract), [query](docs/CONTRATOS.md#query-contract)
+- Provisionamento: [provisioning](docs/CONTRATOS.md#provisioning)
+- Limites e defaults: [limits](docs/CONTRATOS.md#limits)
+- Catálogo de erros: [errors](docs/CONTRATOS.md#error-catalog)
+- Política de segurança (divulgação responsável): [`SECURITY.md`](SECURITY.md)
+- Operação e deploy (canônico): [docs/OPERACAO-E-DEPLOY.md](docs/OPERACAO-E-DEPLOY.md)
+- Diretriz e roadmap (não substitui os contratos implementados): [`PLANO-SPMIDDLE.md`](PLANO-SPMIDDLE.md)
 
-O baseline atual implementa a fundação REST e de domínio do SPMIDDLE,
-dividida em pacotes especializados: `packages/sharepoint-rest-browser`
-(transporte REST, list client, registro de fontes), `packages/sharepoint-schema`
-(schemas declarativos), `packages/sharepoint-provisioning` (inspect/apply/verify),
-`packages/data-core` (mapper, query controlada, repository), `packages/sharepoint-files`
-(upload/validação de arquivos), `packages/sharepoint-rich-text` (sanitização e
-guardrails de segurança) e `packages/sharepoint-testing` (fakes compartilhados
-para os testes dos demais pacotes). A arquitetura e os contratos de cada
-camada estão documentados em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
-[`docs/SCHEMA-CONTRACT.md`](docs/SCHEMA-CONTRACT.md),
-[`docs/QUERY-CONTRACT.md`](docs/QUERY-CONTRACT.md),
-[`docs/ERROR-CATALOG.md`](docs/ERROR-CATALOG.md),
-[`docs/LIMITS.md`](docs/LIMITS.md) e nos ADRs em [`docs/adr/`](docs/adr/).
+## Modern Script Editor (MSE): diretriz de largura em novas publicações
 
-O runtime incremental CAMAP foi validado em `Preview.aspx` com integração somente leitura;
-ele não substitui o `mse-platform`.
+Para consumidores SPMIDDLE publicados no MSE, a preferência para novos snippets e revisões autorizadas é **`FullBleed`**, com `data-spmiddle-layout="FullBleed"` explícito no wrapper.
 
-Baseline histórico do preview CAMAP (outubro de 2026):
+- `Contained` permanece como exceção explícita (solicitação do usuário ou limitação validada do host).
+- A diretriz não altera páginas existentes automaticamente.
 
-- referência histórica do baseline: `83183d6` (não indica o HEAD atual);
-- asset CAMAP publicado em pasta imutável `.../preview/...-v9/`;
-- `Preview.aspx`: `rootMounts=1`, `fullReloads=0`, `internalNavigations=0`;
-- Explore Mais: não é consumidor válido do site CAMAP e foi despublicado;
-- lista técnica temporária `RecursosLinks`: removida do site;
-- `mse-platform`: não alterado.
+O contrato completo (assets, snippet, bootstrap, cleanup e limitações) está na seção 17 do manual: [docs/CONTRATOS.md](docs/CONTRATOS.md#api-surface).
+
+## Testes
 
 ```powershell
 npm test
 ```
 
-O pacote de transporte não depende de bibliotecas externas, DOM, Modern Script
-Editor ou Site Kernel. O acesso a um tenant real não faz parte da suíte local;
-os testes usam um transporte HTTP simulado.
+O acesso a tenant real não faz parte da suíte local; testes usam transporte HTTP simulado.
 
-## Limites de segurança
+## Estado e histórico recente (resumo)
 
-O SPMIDDLE executado no navegador usa a identidade e as permissões do usuário
-corrente. Ele não fornece autenticação privilegiada, não protege segredos no
-frontend e não transforma a interface em uma camada de autorização. Consulte
-[`SECURITY.md`](SECURITY.md) antes de integrar o projeto.
-
-## Objetivos iniciais
-
-- cliente SharePoint REST reutilizável;
-- CRUD de itens;
-- paginação e consultas tipadas;
-- ETags e concorrência;
-- schemas declarativos;
-- provisionamento administrativo `inspect/apply/verify`;
-- repositories e mappers;
-- tratamento de erros e throttling;
-- upload de arquivos;
-- integração incremental com o `mse-platform`.
-
-O primeiro spike de consumidor está em
-[`examples/first-consumer-recursos/`](examples/first-consumer-recursos/). Ele
-valida localmente a compatibilidade do contrato de leitura do Explore Mais sem
-alterar o repositório `mse-platform`. A consulta real foi testada durante a
-auditoria, mas o consumidor foi descartado para o site CAMAP e não está
-publicado.
-
-A diretriz para manter o container MSE vivo e evitar reload completo da página
-em ações internas está em
-[`docs/INCREMENTAL-HOST-UPDATES.md`](docs/INCREMENTAL-HOST-UPDATES.md).
-
-O contrato local executável dessa diretriz está em
-[`examples/incremental-mse-host/`](examples/incremental-mse-host/).
-
-## Escopo futuro
-
-Backend próprio, Microsoft Graph, processamento assíncrono e outras capacidades
-mais complexas serão avaliados somente quando houver uma necessidade concreta.
+- Baseline atual: fundação REST e de domínio dividida em pacotes especializados (outubro de 2026). Ver arquitetura e contratos em `docs/`.
+- Publicação `0.2.0`: assets publicados em seis sites autorizados; consumidores/páginas não migrados. Ver [docs/OPERACAO-E-DEPLOY.md](docs/OPERACAO-E-DEPLOY.md).
+- Preview CAMAP (histórico, outubro/2026): baseline `83183d6` (não é o HEAD atual), asset imutável `.../preview/...-v9/` e teste de `Preview.aspx` com `rootMounts=1`, `fullReloads=0`, `internalNavigations=0`. Integração somente leitura, sem substituir ou alterar `mse-platform`; Explore Mais foi descartado/despublicado neste site e a lista técnica temporária `RecursosLinks` foi removida. Não reativar esse consumidor automaticamente.
+- Atualizações internas devem manter o container MSE vivo: ver [docs/ARQUITETURA.md](docs/ARQUITETURA.md) e o contrato local em [`examples/incremental-mse-host/`](examples/incremental-mse-host/).

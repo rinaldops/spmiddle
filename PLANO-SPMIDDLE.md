@@ -1,11 +1,11 @@
 # SPMIDDLE — Plano de desenvolvimento
 
-**Status:** diretriz inicial; fundação técnica concluída e baseline CAMAP validado
+**Status:** plano de produto; baseline de pacotes e contratos implementados (out/2026)
 **Escopo desta versão:** middleware JavaScript client-side para acesso estruturado a dados do SharePoint  
 **Consumidor de referência para análise:** `web-devs/mse-platform`
 **Local do projeto:** `web-devs/SPMIDDLE`
 
-### Estado atual do planejamento — outubro de 2026
+### Estado atual do planejamento — base implementada (outubro/novembro de 2026)
 
 - a fundação REST/domínio, repositories, schemas, provisioning, segurança e
   paginação está implementada e coberta pela suíte local, agora dividida
@@ -13,7 +13,7 @@
   `sharepoint-provisioning`, `data-core`, `sharepoint-files`,
   `sharepoint-rich-text`, `sharepoint-testing`) conforme a estrutura da
   seção 15 — sem `npm workspaces`, por não haver necessidade comprovada
-  (ver `docs/ARCHITECTURE.md`);
+  (ver `docs/ARQUITETURA.md`);
 - o host CAMAP somente leitura foi validado na `Preview.aspx`, sem reload ou
   navegação interna;
 - o Explore Mais foi encerrado como candidato do site CAMAP e não deve ser
@@ -266,11 +266,11 @@ permanece responsiva ao container e conserva seu próprio `max-width`.
 Não é fullscreen, publicador, gerador de telas ou importação do Site Kernel.
 Assets e bootstrap externos, `refresh/dispose`, contrato do desenvolvedor,
 limitações e rollback estão na
-[seção 17 do manual](docs/CONSUMER-MANUAL.md#17-layout-de-publicação-no-modern-script-editor).
+[seção 17 do manual](docs/EXEMPLOS.md).
 `npm run test:mse-layout` valida o contrato local. A distribuição `0.2.0` foi
 publicada em seis sites autorizados e validada com testes DOM transitórios;
 não houve migração de consumidores nem certificação visual de aplicações.
-O [registro operacional](docs/DEPLOYMENT.md#publicação-020--6-de-novembro-de-2026)
+O [registro operacional](docs/OPERACAO-E-DEPLOY.md)
 preserva resultados e limites. Exemplos incrementais e assets históricos CAMAP
 não foram modificados.
 
@@ -285,7 +285,7 @@ Essa regra não coloca DOM ou navegação no núcleo. Ela define uma obrigação
 adaptadores de host: raiz estável, ações internas sem navegação ASPX, estados
 observáveis, proteção contra respostas obsoletas e fallback explícito somente
 para mudanças externas ou de contexto. Os critérios completos estão em
-[`docs/INCREMENTAL-HOST-UPDATES.md`](docs/INCREMENTAL-HOST-UPDATES.md).
+[`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
 
 ---
 
@@ -727,17 +727,14 @@ Logs não deverão registrar:
 ```text
 web-devs/SPMIDDLE/
 ├── PLANO-SPMIDDLE.md
-├── README.md                         # a criar na implementação inicial
+├── README.md
+├── SECURITY.md
 ├── package.json
 ├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── API.md
-│   ├── SECURITY.md
-│   ├── SCHEMA-CONTRACT.md
-│   ├── QUERY-CONTRACT.md
-│   ├── PROVISIONING.md
-│   ├── ERROR-CATALOG.md
-│   ├── LIMITS.md
+│   ├── ARQUITETURA.md
+│   ├── CONTRATOS.md
+│   ├── EXEMPLOS.md
+│   ├── OPERACAO-E-DEPLOY.md
 │   └── adr/
 ├── packages/
 │   ├── data-core/
@@ -748,29 +745,21 @@ web-devs/SPMIDDLE/
 │   ├── sharepoint-rich-text/
 │   └── sharepoint-testing/
 ├── examples/
-│   ├── vanilla-js/
-│   ├── mse-host/
-│   └── react/
-├── tests/
-│   ├── unit/
-│   ├── contract/
-│   ├── integration/
-│   └── fixtures/
-└── tools/
-    ├── build/
-    ├── release/
-    └── verify/
+├── host-adapters/
+└── scripts/
 ```
 
-A árvore `packages/` e os documentos `docs/ARCHITECTURE.md`,
-`docs/SCHEMA-CONTRACT.md`, `docs/QUERY-CONTRACT.md`, `docs/ERROR-CATALOG.md`,
-`docs/LIMITS.md` e `docs/adr/` listados acima já estão implementados (outubro
-de 2026), sem `npm workspaces` — ver justificativa em
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). A estrutura de `examples/`,
-`tests/` e `tools/` acima permanece como referência de destino; os exemplos
-reais hoje vivem em `examples/<nome-do-host>/` (não em `examples/vanilla-js`,
-`mse-host` ou `react` como mostrado acima) e cada pacote mantém seus próprios
-testes em `packages/<pacote>/test/`.
+A árvore `packages/` e os contratos já estão implementados (outubro de
+2026), sem `npm workspaces`; ver a justificativa em
+[Arquitetura](docs/ARQUITETURA.md). A árvore documental foi consolidada por
+tema: [Contratos](docs/CONTRATOS.md) reúne API, schemas, queries, erros,
+provisionamento e limites; [Operação e deploy](docs/OPERACAO-E-DEPLOY.md)
+reúne publicação e rollback, e [Exemplos](docs/EXEMPLOS.md) documenta os hosts.
+As decisões formais permanecem em `docs/adr/`.
+
+A estrutura acima preserva a referência de organização do plano, não promete
+pacotes ainda inexistentes. Exemplos reais ficam em `examples/<nome-do-host>/`
+e os testes de cada pacote em `packages/<pacote>/test/`.
 
 Durante a primeira implementação, essa estrutura poderá começar menor. Não
 criar pacotes vazios ou abstrações sem consumidor real.
